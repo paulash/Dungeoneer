@@ -1,9 +1,8 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "DungeoneerEdMode.h"
 #include "DungeoneerEdModeToolkit.h"
 #include "Toolkits/ToolkitManager.h"
 #include "EditorModeManager.h"
+#include "EngineUtils.h"
 
 const FEditorModeID FDungeoneerEdMode::EM_DungeoneerEdModeId = TEXT("EM_DungeoneerEdMode");
 
@@ -21,6 +20,21 @@ void FDungeoneerEdMode::Enter()
 {
 	FEdMode::Enter();
 
+	UWorld* World = GEditor->GetEditorWorldContext().World();
+	for (TActorIterator<ADungeon> It(World); It; ++It)
+	{
+		ADungeon* dungeon = (*It);
+		if (!LevelDungeon)
+		{
+			LevelDungeon = dungeon;
+			break;
+		}
+	}
+	if (!LevelDungeon)
+	{
+		LevelDungeon = World->SpawnActor<ADungeon>(ADungeon::StaticClass());
+	}
+	
 	if (!Toolkit.IsValid() && UsesToolkits())
 	{
 		Toolkit = MakeShareable(new FDungeoneerEdModeToolkit);

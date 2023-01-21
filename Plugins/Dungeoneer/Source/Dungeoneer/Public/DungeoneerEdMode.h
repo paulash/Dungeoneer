@@ -1,9 +1,8 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "EdMode.h"
+#include "Dungeon.h"
 
 class FDungeoneerEdMode : public FEdMode
 {
@@ -21,4 +20,9 @@ public:
 	//virtual void ActorSelectionChangeNotify() override;
 	bool UsesToolkits() const override;
 	// End of FEdMode interface
+
+private:
+	
+	TArray<FIntPoint> selectedTiles;
+	ADungeon* LevelDungeon = NULL;
 };
