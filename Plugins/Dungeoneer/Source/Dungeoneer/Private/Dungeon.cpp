@@ -49,8 +49,8 @@ void ADungeon::RegenerateTiles()
 				{
 					// check for a neighbourTile, if there is one and this segment is a wall
 					// don't render the wall.
-					FDungeonTile neighbourTile;
-					if (s <= WALL_INDEX && GetTile(f, TilePoints[s] + DUNGEON_DIRECTIONS[s], neighbourTile))
+					FDungeonTile neighborTile;
+					if (s <= WALL_INDEX && GetTile(f, TilePoints[s] + DUNGEON_DIRECTIONS[s], neighborTile))
 						continue;
 
 					
