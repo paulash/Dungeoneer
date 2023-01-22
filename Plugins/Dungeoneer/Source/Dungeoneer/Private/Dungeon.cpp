@@ -50,9 +50,12 @@ void ADungeon::RegenerateTiles()
 					// check for a neighbourTile, if there is one and this segment is a wall
 					// don't render the wall.
 					FDungeonTile neighborTile;
-					if (s <= WALL_INDEX && GetTile(f, TilePoints[s] + DUNGEON_DIRECTIONS[s], neighborTile))
+					if (s <= WALL_INDEX &&
+						!GetWall(f, TilePoints[t], DUNGEON_DIRECTIONS[s]) &&
+						GetTile(f, TilePoints[t] + DUNGEON_DIRECTIONS[s], neighborTile))
+					{
 						continue;
-
+					}
 					
 					FMeshMaterialPair Pair;
 					if (s <= WALL_INDEX)

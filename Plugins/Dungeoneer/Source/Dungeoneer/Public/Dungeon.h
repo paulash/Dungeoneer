@@ -19,6 +19,8 @@ enum class EDungeonTileSegment : uint8
 	UP		// ceiling
 };
 
+#define DUNGEON_TILE_SEGMENT_COUNT 6
+
 UENUM(BlueprintType)
 enum class EDungeonDirection : uint8
 {
@@ -129,6 +131,65 @@ public:
 };
 
 USTRUCT(BlueprintType)
+struct FDungeonWallHash
+{
+	GENERATED_BODY();
+
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int FloorIndex;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FIntPoint Point;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FIntPoint Direction;
+
+	FDungeonWallHash()
+	{
+		FloorIndex = -1;
+		Point = FIntPoint();
+		Direction = FIntPoint();
+	}
+
+	FDungeonWallHash(int _FloorIndex, FIntPoint _Point, FIntPoint _Direction)
+	{
+		FloorIndex = _FloorIndex;
+		Point = _Point;
+		Direction = _Direction;
+	}
+
+	bool operator==(const FDungeonWallHash& Other) const
+	{
+		return Equals(Other);
+	}
+
+	bool operator!=(const FDungeonWallHash& Other) const
+	{
+		return !Equals(Other);
+	}
+
+	bool Equals(const FDungeonWallHash& Other) const
+	{
+		return FloorIndex == Other.FloorIndex && Point == Other.Point && Direction == Other.Direction;
+	}
+};
+#if UE_BUILD_DEBUG // debuggable and slower.
+uint32 GetTypeHash(const FDungeonWallHash& Thing)
+{
+	uint32 Hash = FCrc::MemCrc32(&Thing, sizeof(FDungeonWallHash));
+	return Hash;
+}
+#else // optimize by inlining in shipping and development builds
+FORCEINLINE uint32 GetTypeHash(const FDungeonWallHash& Thing)
+{
+	uint32 Hash = FCrc::MemCrc32(&Thing, sizeof(FDungeonWallHash));
+	return Hash;
+}
+#endif
+
+USTRUCT(BlueprintType)
 struct FDungeonTile
 {
 	GENERATED_BODY();
@@ -194,6 +255,9 @@ public:
 	TArray<FDungeonFloor> Floors;
 
 	UPROPERTY(EditAnywhere)
+	TSet<FDungeonWallHash> Walls;
+
+	UPROPERTY(EditAnywhere)
 	FMeshMaterialPair DefaultFloor;
 
 	UPROPERTY(EditAnywhere)
@@ -240,26 +304,59 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool CreateTile(int FloorIndex, FIntPoint Point, FDungeonTile& OutTile)
 	{
-		FDungeonFloor OutFloor;
 		// no such floor.
-		if (!GetFloor(FloorIndex, OutFloor))
+		if (!Floors.IsValidIndex(FloorIndex))
 			return false;
 
 		// tile already exists.
 		if (GetTile(FloorIndex, Point, OutTile))
 			return false;
 
+		// generate segments for the tile.
 		OutTile = FDungeonTile();
-		
-		OutTile.Segments.Emplace(FDungeonTileSegment());
-		OutTile.Segments.Emplace(FDungeonTileSegment());
-		OutTile.Segments.Emplace(FDungeonTileSegment());
-		OutTile.Segments.Emplace(FDungeonTileSegment());
-		OutTile.Segments.Emplace(FDungeonTileSegment());
-		OutTile.Segments.Emplace(FDungeonTileSegment());
+		for (int i=0; i < DUNGEON_TILE_SEGMENT_COUNT; i++)
+			OutTile.Segments.Emplace(FDungeonTileSegment());
 		
 		Floors[FloorIndex].Tiles.Emplace(Point, OutTile);
 		return true;
+	}
+	
+	UFUNCTION(BlueprintCallable)
+	bool CreateWall(int FloorIndex, FIntPoint Tile, FIntPoint Direction)
+	{
+		if (GetWall(FloorIndex, Tile, Direction))
+			return false;
+		
+		if (Direction == SOUTH_POINT)
+		{
+			Tile += Direction;
+			Direction = NORTH_POINT;
+		}
+		if (Direction == WEST_POINT)
+		{
+			Tile += Direction;
+			Direction = EAST_POINT;
+		}
+		// flip south and west, to north and east, to ensure tile points and directions
+		// are compacted to the shared space between them.
+		Walls.Emplace(FDungeonWallHash(FloorIndex, Tile, Direction));
+		return true;
+	}
+	
+	UFUNCTION(BlueprintCallable)
+	bool GetWall(int FloorIndex, FIntPoint Tile, FIntPoint Direction)
+	{
+		if (Direction == SOUTH_POINT)
+		{
+			Tile += Direction;
+			Direction = NORTH_POINT;
+		}
+		if (Direction == WEST_POINT)
+		{
+			Tile += Direction;
+			Direction = EAST_POINT;
+		}
+		return Walls.Contains(FDungeonWallHash(FloorIndex, Tile, Direction));
 	}
 	
 private:
