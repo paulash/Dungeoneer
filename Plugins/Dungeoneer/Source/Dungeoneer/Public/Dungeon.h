@@ -218,8 +218,9 @@ public:
 	}
 
 	UFUNCTION(BlueprintCallable)
-	bool GetTile(int FloorIndex, FIntPoint Point, FDungeonFloor& OutFloor, FDungeonTile& OutTile)
+	bool GetTile(int FloorIndex, FIntPoint Point, FDungeonTile& OutTile)
 	{
+		FDungeonFloor OutFloor;
 		if (GetFloor(FloorIndex, OutFloor))
 			return OutFloor.GetTile(Point, OutTile);
 		return false;
@@ -233,18 +234,19 @@ public:
 		int floorIndex = Floors.Emplace(floor);
 
 		// always create a 0,0 tile for a new room.
-		return CreateTile(floorIndex, FIntPoint(0,0), floor, tile); 
+		return CreateTile(floorIndex, FIntPoint(0,0), tile); 
 	}
 
 	UFUNCTION(BlueprintCallable)
-	bool CreateTile(int FloorIndex, FIntPoint Point, FDungeonFloor& OutFloor, FDungeonTile& OutTile)
+	bool CreateTile(int FloorIndex, FIntPoint Point, FDungeonTile& OutTile)
 	{
+		FDungeonFloor OutFloor;
 		// no such floor.
 		if (!GetFloor(FloorIndex, OutFloor))
 			return false;
 
 		// tile already exists.
-		if (GetTile(FloorIndex, Point, OutFloor, OutTile))
+		if (GetTile(FloorIndex, Point, OutTile))
 			return false;
 
 		OutTile = FDungeonTile();

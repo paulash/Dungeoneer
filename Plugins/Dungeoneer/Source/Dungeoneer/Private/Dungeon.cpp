@@ -42,12 +42,18 @@ void ADungeon::RegenerateTiles()
 		Floors[f].Tiles.GetKeys(TilePoints);
 		for (int t=0; t < TilePoints.Num(); t++)
 		{
-			FDungeonFloor floor;
 			FDungeonTile tile;
-			if (GetTile(f, TilePoints[t], floor, tile))
+			if (GetTile(f, TilePoints[t], tile))
 			{
 				for (int s=0; s < tile.Segments.Num(); s++)
 				{
+					// check for a neighbourTile, if there is one and this segment is a wall
+					// don't render the wall.
+					FDungeonTile neighbourTile;
+					if (s <= WALL_INDEX && GetTile(f, TilePoints[s] + DUNGEON_DIRECTIONS[s], neighbourTile))
+						continue;
+
+					
 					FMeshMaterialPair Pair;
 					if (s <= WALL_INDEX)
 						Pair = DefaultWall;
