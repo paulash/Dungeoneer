@@ -47,8 +47,6 @@ void ADungeon::RegenerateTiles()
 			{
 				for (int s=0; s < tile.Segments.Num(); s++)
 				{
-					// check for a neighbourTile, if there is one and this segment is a wall
-					// don't render the wall.
 					FDungeonTile neighborTile;
 					if (s <= WALL_INDEX &&
 						!GetWall(f, TilePoints[t], DUNGEON_DIRECTIONS[s]) &&

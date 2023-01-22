@@ -8,17 +8,6 @@
 #include "GameplayTagContainer.h"
 #include "Dungeon.generated.h"
 
-UENUM(BlueprintType)
-enum class EDungeonTileSegment : uint8
-{
-	NORTH,	// wall
-	SOUTH,	// wall
-	EAST,	// wall
-	WEST,	// wall
-	DOWN,	// floor
-	UP		// ceiling
-};
-
 #define DUNGEON_TILE_SEGMENT_COUNT 6
 
 UENUM(BlueprintType)
@@ -111,26 +100,6 @@ FORCEINLINE uint32 GetTypeHash(const FMeshMaterialPair& Thing)
 #endif
 
 USTRUCT(BlueprintType)
-struct FDungeonTileSegment
-{
-	GENERATED_BODY();
-
-public:
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	EDungeonTileSegment Segment;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayTagContainer Tags;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UMaterial* Material;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UStaticMesh* Mesh;
-};
-
-USTRUCT(BlueprintType)
 struct FDungeonWallHash
 {
 	GENERATED_BODY();
@@ -188,6 +157,23 @@ FORCEINLINE uint32 GetTypeHash(const FDungeonWallHash& Thing)
 	return Hash;
 }
 #endif
+
+USTRUCT(BlueprintType)
+struct FDungeonTileSegment
+{
+	GENERATED_BODY();
+
+public:
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FGameplayTagContainer Tags;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UMaterial* Material;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UStaticMesh* Mesh;
+};
 
 USTRUCT(BlueprintType)
 struct FDungeonTile
@@ -358,6 +344,18 @@ public:
 		}
 		return Walls.Contains(FDungeonWallHash(FloorIndex, Tile, Direction));
 	}
+
+	// need 'IsBlocked(TilePoint, Direction) checks for walls and 'blocked' flags on tiles.
+	// need 'DeleteFloor' purge all tiles and walls.
+	// need 'DeleteTile' purge any walls set around them.
+	// need 'DeleteWall'
+	// need 'CheckWallTag' checks if a wall segment in a specific tile/direction has a flag.
+	// need 'AddWallTag'
+	// need 'RemoveWallTag'
+	// need 'AddTileTag'
+	// need 'RemoveTileTag'
+	// need 'AddFloorTag'
+	// need 'RemoveFloorTag'
 	
 private:
 
