@@ -19,6 +19,7 @@ FDungeoneerEdMode::~FDungeoneerEdMode()
 void FDungeoneerEdMode::Enter()
 {
 	FEdMode::Enter();
+	LevelDungeon = NULL;
 
 	UWorld* World = GEditor->GetEditorWorldContext().World();
 	for (TActorIterator<ADungeon> It(World); It; ++It)
