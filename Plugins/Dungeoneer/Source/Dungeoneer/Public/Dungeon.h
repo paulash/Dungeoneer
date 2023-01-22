@@ -308,9 +308,9 @@ public:
 	}
 	
 	UFUNCTION(BlueprintCallable)
-	bool CreateWall(int FloorIndex, FIntPoint Tile, FIntPoint Direction)
+	bool CreateWallOverride(int FloorIndex, FIntPoint Tile, FIntPoint Direction)
 	{
-		if (GetWall(FloorIndex, Tile, Direction))
+		if (GetWallOverride(FloorIndex, Tile, Direction))
 			return false;
 		
 		if (Direction == SOUTH_POINT)
@@ -330,7 +330,7 @@ public:
 	}
 	
 	UFUNCTION(BlueprintCallable)
-	bool GetWall(int FloorIndex, FIntPoint Tile, FIntPoint Direction)
+	bool GetWallOverride(int FloorIndex, FIntPoint Tile, FIntPoint Direction)
 	{
 		if (Direction == SOUTH_POINT)
 		{
@@ -348,7 +348,7 @@ public:
 	// need 'IsBlocked(TilePoint, Direction) checks for walls and 'blocked' flags on tiles.
 	// need 'DeleteFloor' purge all tiles and walls.
 	// need 'DeleteTile' purge any walls set around them.
-	// need 'DeleteWall'
+	// need 'DeleteWallOverride'
 	// need 'CheckWallTag' checks if a wall segment in a specific tile/direction has a flag.
 	// need 'AddWallTag'
 	// need 'RemoveWallTag'

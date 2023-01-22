@@ -49,7 +49,7 @@ void ADungeon::RegenerateTiles()
 				{
 					FDungeonTile neighborTile;
 					if (s <= WALL_INDEX &&
-						!GetWall(f, TilePoints[t], DUNGEON_DIRECTIONS[s]) &&
+						!GetWallOverride(f, TilePoints[t], DUNGEON_DIRECTIONS[s]) &&
 						GetTile(f, TilePoints[t] + DUNGEON_DIRECTIONS[s], neighborTile))
 					{
 						continue;
