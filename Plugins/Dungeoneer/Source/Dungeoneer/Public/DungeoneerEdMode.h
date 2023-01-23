@@ -50,6 +50,7 @@ public:
 
 	virtual bool InputKey(FEditorViewportClient* ViewportClient, FViewport* Viewport, FKey Key, EInputEvent Event) override;
 	virtual bool HandleClick(FEditorViewportClient* InViewportClient, HHitProxy* HitProxy, const FViewportClick& Click) override;
+	virtual bool BoxSelect(FBox& InBox, bool InSelect) override;
 
 private:
 
