@@ -13,6 +13,9 @@ ADungeon::ADungeon()
 	DefaultFloor = FMeshMaterialPair(floor.Object, quad.Object);
 	DefaultWall = FMeshMaterialPair(wall.Object, quad.Object);
 	DefaultCeiling = FMeshMaterialPair(ceiling.Object, quad.Object);
+
+	static ConstructorHelpers::FObjectFinder<UMaterial> selection(TEXT("/Dungeoneer/selection-border-material.selection-border-material"));
+	SelectionMaterial = selection.Object;
 }
 
 void ADungeon::OnConstruction(const FTransform& Transform)
@@ -31,50 +34,75 @@ void ADungeon::RegenerateTiles()
 
 	// if there are no floors, generate one with just one tile at 0,0
 	// to get things started.
-	if (Floors.Num() == 0)
+	if (Levels.Num() == 0)
 	{
-		CreateFloor();
+		CreateLevel();
 	}
 
 	TArray<FIntPoint> TilePoints;
-	for (int f=0; f < Floors.Num(); f++)
+	for (int l=0; l < Levels.Num(); l++)
 	{
-		Floors[f].Tiles.GetKeys(TilePoints);
+		Levels[l].Tiles.GetKeys(TilePoints);
 		for (int t=0; t < TilePoints.Num(); t++)
 		{
 			FDungeonTile tile;
-			if (GetTile(f, TilePoints[t], tile))
+			if (GetTile(l, TilePoints[t], tile))
 			{
 				for (int s=0; s < tile.Segments.Num(); s++)
 				{
 					FDungeonTile neighborTile;
 					if (s <= WALL_INDEX &&
-						!GetWallOverride(f, TilePoints[t], DUNGEON_DIRECTIONS[s]) &&
-						GetTile(f, TilePoints[t] + DUNGEON_DIRECTIONS[s], neighborTile))
+						!HasWallOverride(l, TilePoints[t], DUNGEON_DIRECTIONS[s]) &&
+						GetTile(l, TilePoints[t] + DUNGEON_DIRECTIONS[s], neighborTile))
 					{
 						continue;
 					}
 					
-					FMeshMaterialPair Pair;
-					if (s <= WALL_INDEX)
-						Pair = DefaultWall;
-					else if (s == FLOOR_INDEX)
-						Pair = DefaultFloor;
-					else if (s == CEILING_INDEX)
-						Pair = DefaultCeiling;
+					UStaticMesh* mesh = NULL;
+					UMaterial* material = NULL;
+
+					// prioritize the mesh/materials from segment/floor/default sets.
+					FMeshMaterialPair SegmentPair = FMeshMaterialPair(tile.Segments[s].Material, tile.Segments[s].Mesh);
+					FMeshMaterialPair FloorPair;
+					FMeshMaterialPair DefaultPair;
 					
-					UStaticMesh* mesh = tile.Segments[s].Mesh ? tile.Segments[s].Mesh : Pair.Mesh;
-					UMaterial* material = tile.Segments[s].Material ? tile.Segments[s].Material : Pair.Material;
+					if (s == FLOOR_INDEX)
+					{
+						FloorPair = Levels[l].Floor;
+						DefaultPair = DefaultFloor;
+					}
+					else if (s == CEILING_INDEX)
+					{
+						FloorPair = Levels[l].Ceiling;
+						DefaultPair = DefaultCeiling;
+					}
+					else
+					{
+						FloorPair = Levels[l].Wall;
+						DefaultPair = DefaultWall;
+					}
+
+					if (SegmentPair.Mesh)
+						mesh = SegmentPair.Mesh;
+					else if (FloorPair.Mesh)
+						mesh = FloorPair.Mesh;
+					else
+						mesh = DefaultPair.Mesh;
+
+					if (SegmentPair.Material)
+						material = SegmentPair.Material;
+					else if (FloorPair.Material)
+						material = FloorPair.Material;
+					else
+						material = DefaultPair.Material;
 					
 					UInstancedStaticMeshComponent* ISMC = GetInstancedStaticMeshComponent(material, mesh);
-					if (!ISMC)
-						continue; // TODO: report an error.
 					ISMC->AddInstance(FTransform(
 						DUNGEON_SEGMENT_ROTATIONS[s],
 						FVector(
 							TilePoints[t].X * DungeonScale,
 							TilePoints[t].Y * DungeonScale,
-							f * DungeonFloorZ)
+							l * DungeonLevelZ)
 						)
 					);
 				}
@@ -92,6 +120,8 @@ UInstancedStaticMeshComponent* ADungeon::GetInstancedStaticMeshComponent(UMateri
 		AddInstanceComponent(ISMC);
 		ISMC->RegisterComponent();
 		ISMC->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		ISMC->SetRelativeLocation(FVector(0,0, -(DungeonLevelZ/2)));
+		ISMC->SetAbsolute(false, true, true);
 		ISMC->SetStaticMesh(Mesh);
 		ISMC->SetMaterial(0, Material);
 

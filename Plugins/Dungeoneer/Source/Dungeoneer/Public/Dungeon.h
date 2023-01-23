@@ -6,6 +6,7 @@
 #include "Misc/Crc.h"
 #include "Components/ChildActorComponent.h"
 #include "GameplayTagContainer.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Dungeon.generated.h"
 
 #define DUNGEON_TILE_SEGMENT_COUNT 6
@@ -52,10 +53,10 @@ struct FMeshMaterialPair
 public:
 
 	UPROPERTY(EditAnywhere)
-	UMaterial* Material;
+	UMaterial* Material = NULL;
 
 	UPROPERTY(EditAnywhere)
-	UStaticMesh* Mesh;
+	UStaticMesh* Mesh = NULL;
 
 	FMeshMaterialPair()
 		: Material(NULL), Mesh(NULL)
@@ -107,24 +108,19 @@ struct FDungeonWallHash
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int FloorIndex;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FIntPoint Point;
+	FIntPoint Point = FIntPoint(0, 0);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FIntPoint Direction;
+	FIntPoint Direction = FIntPoint(0, 0);
 
 	FDungeonWallHash()
 	{
-		FloorIndex = -1;
-		Point = FIntPoint();
-		Direction = FIntPoint();
+		Point = FIntPoint(0, 0);
+		Direction = FIntPoint(0, 0);
 	}
 
-	FDungeonWallHash(int _FloorIndex, FIntPoint _Point, FIntPoint _Direction)
+	FDungeonWallHash(FIntPoint _Point, FIntPoint _Direction)
 	{
-		FloorIndex = _FloorIndex;
 		Point = _Point;
 		Direction = _Direction;
 	}
@@ -141,7 +137,7 @@ public:
 
 	bool Equals(const FDungeonWallHash& Other) const
 	{
-		return FloorIndex == Other.FloorIndex && Point == Other.Point && Direction == Other.Direction;
+		return Point == Other.Point && Direction == Other.Direction;
 	}
 };
 #if UE_BUILD_DEBUG // debuggable and slower.
@@ -169,10 +165,10 @@ public:
 	FGameplayTagContainer Tags;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UMaterial* Material;
+	UMaterial* Material = NULL;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UStaticMesh* Mesh;
+	UStaticMesh* Mesh = NULL;
 };
 
 USTRUCT(BlueprintType)
@@ -188,12 +184,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TArray<FDungeonTileSegment> Segments;
 
-	UPROPERTY()
-	FIntPoint Point;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool Blocked = false;
+
+	FDungeonTile()
+	{
+		for (int i=0; i < DUNGEON_TILE_SEGMENT_COUNT; i++)
+			Segments.Emplace(FDungeonTileSegment());
+	}
+	
 };
 
 USTRUCT(BlueprintType)
-struct FDungeonFloor
+struct FDungeonLevel
 {
 	GENERATED_BODY()
 	
@@ -212,7 +215,10 @@ public:
 	FMeshMaterialPair Ceiling;
 
 	UPROPERTY(EditAnywhere)
-	TMap<FIntPoint, FDungeonTile> Tiles; 
+	TMap<FIntPoint, FDungeonTile> Tiles;
+
+	UPROPERTY(EditAnywhere)
+	TSet<FDungeonWallHash> WallOverrides;
 	
 	bool GetTile(FIntPoint Point, FDungeonTile& OutTile)
 	{
@@ -235,13 +241,10 @@ public:
 
 	// distance between each floor along the Z axis.
 	UPROPERTY(EditAnywhere)
-	float DungeonFloorZ = -100.0f;
+	float DungeonLevelZ = -100.0f;
 
 	UPROPERTY(EditAnywhere)
-	TArray<FDungeonFloor> Floors;
-
-	UPROPERTY(EditAnywhere)
-	TSet<FDungeonWallHash> Walls;
+	TArray<FDungeonLevel> Levels;
 
 	UPROPERTY(EditAnywhere)
 	FMeshMaterialPair DefaultFloor;
@@ -260,105 +263,195 @@ public:
 	void RegenerateTiles();
 
 	UFUNCTION(BlueprintCallable)
-	bool GetFloor(int FloorIndex, FDungeonFloor& OutFloor)
+	bool GetFloor(int LevelIndex, FDungeonLevel& OutFloor)
 	{
-		if (!Floors.IsValidIndex(FloorIndex)) return false;
-		OutFloor = Floors[FloorIndex];
+		if (!Levels.IsValidIndex(LevelIndex)) return false;
+		OutFloor = Levels[LevelIndex];
 		return true;
 	}
 
 	UFUNCTION(BlueprintCallable)
-	bool GetTile(int FloorIndex, FIntPoint Point, FDungeonTile& OutTile)
+	int CreateLevel()
 	{
-		FDungeonFloor OutFloor;
-		if (GetFloor(FloorIndex, OutFloor))
-			return OutFloor.GetTile(Point, OutTile);
+		FDungeonTile tile;
+		FDungeonLevel floor = FDungeonLevel();
+		int LevelIndex = Levels.Emplace(floor);
+
+		// always create a 0,0 tile for a new room.
+		if (CreateTile(LevelIndex, FIntPoint(0,0), tile))
+		{
+			RegenerateTiles();
+			return true;
+		}
+		Levels.RemoveAt(LevelIndex);
 		return false;
 	}
 
 	UFUNCTION(BlueprintCallable)
-	int CreateFloor()
+	bool DeleteLevel(int LevelIndex)
 	{
-		FDungeonTile tile;
-		FDungeonFloor floor = FDungeonFloor();
-		int floorIndex = Floors.Emplace(floor);
-
-		// always create a 0,0 tile for a new room.
-		return CreateTile(floorIndex, FIntPoint(0,0), tile); 
+		if (Levels.Num() <= 1) return false; // can't delete the last level
+		if (Levels.IsValidIndex(LevelIndex))
+		{
+			Levels.RemoveAt(LevelIndex);
+			RegenerateTiles();
+			return true;
+		}
+		return false;
 	}
 
 	UFUNCTION(BlueprintCallable)
-	bool CreateTile(int FloorIndex, FIntPoint Point, FDungeonTile& OutTile)
+	bool GetTile(int LevelIndex, FIntPoint TilePoint, FDungeonTile& OutTile)
 	{
-		// no such floor.
-		if (!Floors.IsValidIndex(FloorIndex))
-			return false;
+		FDungeonLevel OutFloor;
+		if (GetFloor(LevelIndex, OutFloor))
+			return OutFloor.GetTile(TilePoint, OutTile);
+		return false;
+	}
 
-		// tile already exists.
-		if (GetTile(FloorIndex, Point, OutTile))
-			return false;
-
-		// generate segments for the tile.
-		OutTile = FDungeonTile();
-		for (int i=0; i < DUNGEON_TILE_SEGMENT_COUNT; i++)
-			OutTile.Segments.Emplace(FDungeonTileSegment());
-		
-		Floors[FloorIndex].Tiles.Emplace(Point, OutTile);
-		return true;
+	UFUNCTION(BlueprintCallable)
+	bool HasTile(int LevelIndex, FIntPoint TilePoint)
+	{
+		if (!Levels.IsValidIndex(LevelIndex)) return false;
+		return Levels[LevelIndex].Tiles.Contains(TilePoint);
 	}
 	
 	UFUNCTION(BlueprintCallable)
-	bool CreateWallOverride(int FloorIndex, FIntPoint Tile, FIntPoint Direction)
+	bool CreateTile(int LevelIndex, FIntPoint Point, FDungeonTile& OutTile)
 	{
-		if (GetWallOverride(FloorIndex, Tile, Direction))
+		// no such floor.
+		if (!Levels.IsValidIndex(LevelIndex))
+			return false;
+
+		// tile already exists.
+		if (GetTile(LevelIndex, Point, OutTile))
+			return false;
+		
+		OutTile = FDungeonTile();
+		
+		Levels[LevelIndex].Tiles.Emplace(Point, OutTile);
+		RegenerateTiles();
+		return true;
+	}
+
+	UFUNCTION(BlueprintCallable)
+	bool DeleteTile(int LevelIndex, FIntPoint TilePoint)
+	{
+		if (!Levels.IsValidIndex(LevelIndex)) return false;
+		if (!Levels[LevelIndex].Tiles.Contains(TilePoint)) return false;
+
+		// delete the tiles.
+		// delete any wall overrides associated.
+
+		Levels[LevelIndex].Tiles.Remove(TilePoint);
+		for (int i=0; i < DUNGEON_DIRECTIONS.Num(); i++)
+			DeleteWallOverride(LevelIndex, TilePoint, DUNGEON_DIRECTIONS[i]);
+
+		RegenerateTiles();
+		return true;
+	}
+
+	UFUNCTION(BlueprintCallable)
+	bool HasWallOverride(int LevelIndex, FIntPoint TilePoint, FIntPoint Direction)
+	{
+		if (!Levels.IsValidIndex(LevelIndex))
 			return false;
 		
 		if (Direction == SOUTH_POINT)
 		{
-			Tile += Direction;
+			TilePoint += Direction;
 			Direction = NORTH_POINT;
 		}
 		if (Direction == WEST_POINT)
 		{
-			Tile += Direction;
+			TilePoint += Direction;
+			Direction = EAST_POINT;
+		}
+		return Levels[LevelIndex].WallOverrides.Contains(FDungeonWallHash(TilePoint, Direction));
+	}
+	
+	UFUNCTION(BlueprintCallable)
+	bool CreateWallOverride(int LevelIndex, FIntPoint TilePoint, FIntPoint Direction)
+	{
+		if (!Levels.IsValidIndex(LevelIndex))
+			return false;
+		
+		if (HasWallOverride(LevelIndex, TilePoint, Direction))
+			return false;
+		
+		if (Direction == SOUTH_POINT)
+		{
+			TilePoint += Direction;
+			Direction = NORTH_POINT;
+		}
+		if (Direction == WEST_POINT)
+		{
+			TilePoint += Direction;
 			Direction = EAST_POINT;
 		}
 		// flip south and west, to north and east, to ensure tile points and directions
 		// are compacted to the shared space between them.
-		Walls.Emplace(FDungeonWallHash(FloorIndex, Tile, Direction));
+		Levels[LevelIndex].WallOverrides.Emplace(FDungeonWallHash(TilePoint, Direction));
+		RegenerateTiles();
 		return true;
 	}
-	
+
 	UFUNCTION(BlueprintCallable)
-	bool GetWallOverride(int FloorIndex, FIntPoint Tile, FIntPoint Direction)
+	bool DeleteWallOverride(int LevelIndex, FIntPoint TilePoint, FIntPoint Direction)
 	{
+		if (!Levels.IsValidIndex(LevelIndex))
+			return false;
+		
 		if (Direction == SOUTH_POINT)
 		{
-			Tile += Direction;
+			TilePoint += Direction;
 			Direction = NORTH_POINT;
 		}
 		if (Direction == WEST_POINT)
 		{
-			Tile += Direction;
+			TilePoint += Direction;
 			Direction = EAST_POINT;
 		}
-		return Walls.Contains(FDungeonWallHash(FloorIndex, Tile, Direction));
+		Levels[LevelIndex].WallOverrides.Remove(FDungeonWallHash(TilePoint, Direction));
+		return true;
+	}
+	
+	UFUNCTION(BlueprintCallable)
+	bool IsBlocked(int LevelIndex, FIntPoint TilePoint, FIntPoint Direction)
+	{
+		if (!Levels.IsValidIndex(LevelIndex))
+			return true;
+
+		FDungeonTile tile;
+		if (GetTile(LevelIndex, TilePoint + Direction, tile) && tile.Blocked)
+			return true;
+
+		if (HasWallOverride(LevelIndex, TilePoint, Direction))
+			return true;
+
+		return false;
 	}
 
-	// need 'IsBlocked(TilePoint, Direction) checks for walls and 'blocked' flags on tiles.
-	// need 'DeleteFloor' purge all tiles and walls.
-	// need 'DeleteTile' purge any walls set around them.
-	// need 'DeleteWallOverride'
+	// add tag helpers.
 	// need 'CheckWallTag' checks if a wall segment in a specific tile/direction has a flag.
 	// need 'AddWallTag'
 	// need 'RemoveWallTag'
 	// need 'AddTileTag'
 	// need 'RemoveTileTag'
-	// need 'AddFloorTag'
-	// need 'RemoveFloorTag'
+	// need 'AddLevelTag'
+	// need 'RemoveLevelTag'
+
+	UPROPERTY()
+	UMaterial* SelectionMaterial;
+	
+	UPROPERTY()
+	UMaterialInstanceDynamic* TileSelectedMaterial;
+
+	UPROPERTY()
+	UMaterialInstanceDynamic* TileUnselectedMaterial;
 	
 private:
-
+	
 	UPROPERTY()
 	TMap<FMeshMaterialPair, UInstancedStaticMeshComponent*> InstancedStaticMeshComponents;
 
