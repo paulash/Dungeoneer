@@ -38,6 +38,9 @@ void FDungeoneerEdMode::Enter()
 	{
 		LevelDungeon = World->SpawnActor<ADungeon>(ADungeon::StaticClass());
 	}
+	SelectedTiles.Empty();
+	ShiftHeld = false;
+	CtrlHeld = false;
 	
 	if (!Toolkit.IsValid() && UsesToolkits())
 	{
