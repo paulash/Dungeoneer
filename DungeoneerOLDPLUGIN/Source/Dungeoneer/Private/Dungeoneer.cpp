@@ -6,7 +6,7 @@
 void FDungeoneerModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
-	FEditorModeRegistry::Get().RegisterMode<FDungeoneerEdMode>(FDungeoneerEdMode::EM_DungeoneerEdModeId, LOCTEXT("DungeoneerEdModeName", "Dungeoneer Editor"), FSlateIcon(), true);
+	FEditorModeRegistry::Get().RegisterMode<FDungeoneerEdMode>(FDungeoneerEdMode::EM_DungeoneerEdModeId, LOCTEXT("DungeoneerEdModeName", "Dungeoneer"), FSlateIcon(), true);
 }
 
 void FDungeoneerModule::ShutdownModule()

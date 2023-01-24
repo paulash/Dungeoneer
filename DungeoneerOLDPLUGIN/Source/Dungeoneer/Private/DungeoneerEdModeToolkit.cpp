@@ -14,21 +14,23 @@ FDungeoneerEdModeToolkit::FDungeoneerEdModeToolkit()
 void FDungeoneerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitHost)
 {
 	SAssignNew(ToolkitWidget, SBorder)
-		.HAlign(HAlign_Center)
-		.Padding(25)
 		[
 			SNew(SVerticalBox)
 			+ SVerticalBox::Slot()
 			.AutoHeight()
-			.HAlign(HAlign_Center)
-			.Padding(50)
+			[
+				SNew(STextBlock)
+				.AutoWrapText(true)
+				.Text(LOCTEXT("HelperLabel", "Select some actors and move them around using buttons below"))
+			]
+			+ SVerticalBox::Slot()
+			.AutoHeight()
 			[
 				SNew(STextBlock)
 				.AutoWrapText(true)
 				.Text(LOCTEXT("HelperLabel", "Select some actors and move them around using buttons below"))
 			]
 		];
-		
 	FModeToolkit::Init(InitToolkitHost);
 }
 
