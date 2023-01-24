@@ -4,29 +4,23 @@
 #include "EdMode.h"
 #include "Dungeon.h"
 
-struct HDungeonTileProxy : public HHitProxy
+struct HDungeonSelectionProxy : public HHitProxy
 {
 	DECLARE_HIT_PROXY();
 
-	HDungeonTileProxy(UObject* InRefObject, FIntPoint point)
-		: HHitProxy(HPP_UI), RefObject(InRefObject), TilePoint(point)
+	HDungeonSelectionProxy(UObject* InRefObject, int levelIndex, FIntPoint point)
+		: HHitProxy(HPP_UI), RefObject(InRefObject), LevelIndex(levelIndex), TilePoint(point), Segment(EDungeonTileSegment::FLOOR)
+	{}
+	
+	HDungeonSelectionProxy(UObject* InRefObject, int levelIndex, FIntPoint point, EDungeonTileSegment segment)
+		: HHitProxy(HPP_UI), RefObject(InRefObject), LevelIndex(levelIndex), TilePoint(point), Segment(segment)
 	{}
 
 	UObject* RefObject;
+
+	int LevelIndex;
 	FIntPoint TilePoint;
-};
-
-struct HDungeonTileWallProxy : public HHitProxy
-{
-	DECLARE_HIT_PROXY();
-
-	HDungeonTileWallProxy(UObject* InRefObject, FIntPoint point, FIntPoint direction)
-		: HHitProxy(HPP_UI), RefObject(InRefObject), TilePoint(point), Direction(direction)
-	{}
-
-	UObject* RefObject;
-	FIntPoint TilePoint;
-	FIntPoint Direction;
+	EDungeonTileSegment Segment;
 };
 
 class FDungeoneerEdMode : public FEdMode
@@ -51,13 +45,17 @@ public:
 	virtual bool InputKey(FEditorViewportClient* ViewportClient, FViewport* Viewport, FKey Key, EInputEvent Event) override;
 	virtual bool HandleClick(FEditorViewportClient* InViewportClient, HHitProxy* HitProxy, const FViewportClick& Click) override;
 	virtual bool BoxSelect(FBox& InBox, bool InSelect) override;
+	virtual bool IsSelectionAllowed(AActor* InActor, bool bInSelection) const override
+	{
+		return false;
+	}
 
 private:
 
 	FMaterialRenderProxy* TileSelectedMaterialProxy = NULL;
 	FMaterialRenderProxy* TileUnselectedMaterialProxy = NULL;
 	
-	TArray<FIntPoint> SelectedTiles;
+	TArray<FDungeonSegmentSelection> SegmentSelections;
 	ADungeon* LevelDungeon = NULL;
 	bool ShiftHeld = false;
 	bool CtrlHeld = false;

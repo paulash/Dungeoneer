@@ -17,23 +17,40 @@ enum class EDungeonDirection : uint8
 	NORTH,
 	SOUTH,
 	EAST,
-	WEST
+	WEST,
+	DOWN,
+	UP
 };
 
-#define NORTH_POINT FIntPoint(1, 0)
-#define EAST_POINT FIntPoint(0, 1)
-#define SOUTH_POINT FIntPoint(-1, 0)
-#define WEST_POINT FIntPoint(0, -1)
+UENUM(BlueprintType)
+enum class EDungeonTileSegment : uint8
+{
+	NORTH_WALL,
+	SOUTH_WALL,
+	EAST_WALL,
+	WEST_WALL,
+	FLOOR,
+	CEILING
+};
+
+#define NORTH_POINT FIntVector(1, 0, 0)
+#define EAST_POINT FIntVector(0, 1, 0)
+#define SOUTH_POINT FIntVector(-1, 0, 0)
+#define WEST_POINT FIntVector(0, -1, 0)
+#define DOWN_POINT FIntVector(0, 0, 1)
+#define UP_POINT FIntVector(0,0, -1)
 
 #define WALL_INDEX 3
 #define FLOOR_INDEX 4
 #define CEILING_INDEX 5
 
-const static TArray<FIntPoint> DUNGEON_DIRECTIONS = {
+const static TArray<FIntVector> DUNGEON_DIRECTIONS = {
 	NORTH_POINT,
 	EAST_POINT,
 	SOUTH_POINT,
-	WEST_POINT
+	WEST_POINT,
+	DOWN_POINT,
+	UP_POINT
 };
 
 const static TArray<FRotator> DUNGEON_SEGMENT_ROTATIONS = {
@@ -196,6 +213,68 @@ public:
 };
 
 USTRUCT(BlueprintType)
+struct FDungeonSegmentSelection
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY()
+	int LevelIndex;
+	
+	UPROPERTY()
+	FIntPoint TilePoint;
+
+	UPROPERTY()
+	EDungeonTileSegment Segment;
+
+	FDungeonSegmentSelection()
+	{
+		LevelIndex = -1;
+		TilePoint = FIntPoint::ZeroValue;
+		Segment = EDungeonTileSegment::NORTH_WALL;
+	}
+
+	FDungeonSegmentSelection(int _LevelIndex, FIntPoint _TilePoint, EDungeonTileSegment _Segment)
+	{
+		LevelIndex = _LevelIndex;
+		TilePoint = _TilePoint;
+		Segment = _Segment;
+	}
+
+	bool operator==(const FDungeonSegmentSelection& Other) const
+	{
+		return Equals(Other);
+	}
+
+	bool operator!=(const FDungeonSegmentSelection& Other) const
+	{
+		return !Equals(Other);
+	}
+
+	bool Equals(const FDungeonSegmentSelection& Other) const
+	{
+		return
+			LevelIndex == Other.LevelIndex &&
+			TilePoint == Other.TilePoint &&
+			Segment == Other.Segment;
+	}
+};
+#if UE_BUILD_DEBUG // debuggable and slower.
+uint32 GetTypeHash(const FDungeonSegmentSelection& Thing)
+{
+	uint32 Hash = FCrc::MemCrc32(&Thing, sizeof(FDungeonSegmentSelection));
+	return Hash;
+}
+#else // optimize by inlining in shipping and development builds
+FORCEINLINE uint32 GetTypeHash(const FDungeonSegmentSelection& Thing)
+{
+	uint32 Hash = FCrc::MemCrc32(&Thing, sizeof(FDungeonSegmentSelection));
+	return Hash;
+}
+#endif
+
+USTRUCT(BlueprintType)
 struct FDungeonLevel
 {
 	GENERATED_BODY()
@@ -273,12 +352,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	int CreateLevel()
 	{
-		FDungeonTile tile;
 		FDungeonLevel floor = FDungeonLevel();
 		int LevelIndex = Levels.Emplace(floor);
 
 		// always create a 0,0 tile for a new room.
-		if (CreateTile(LevelIndex, FIntPoint(0,0), tile))
+		if (CreateTile(LevelIndex, FIntPoint(0,0)))
 		{
 			RegenerateTiles();
 			return true;
@@ -317,12 +395,13 @@ public:
 	}
 	
 	UFUNCTION(BlueprintCallable)
-	bool CreateTile(int LevelIndex, FIntPoint Point, FDungeonTile& OutTile)
+	bool CreateTile(int LevelIndex, FIntPoint Point)
 	{
 		// no such floor.
 		if (!Levels.IsValidIndex(LevelIndex))
 			return false;
 
+		FDungeonTile OutTile;
 		// tile already exists.
 		if (GetTile(LevelIndex, Point, OutTile))
 			return false;
@@ -352,26 +431,26 @@ public:
 	}
 
 	UFUNCTION(BlueprintCallable)
-	bool HasWallOverride(int LevelIndex, FIntPoint TilePoint, FIntPoint Direction)
+	bool HasWallOverride(int LevelIndex, FIntPoint TilePoint, FIntVector Direction)
 	{
 		if (!Levels.IsValidIndex(LevelIndex))
 			return false;
 		
 		if (Direction == SOUTH_POINT)
 		{
-			TilePoint += Direction;
+			TilePoint += FIntPoint(Direction.X, Direction.Y);
 			Direction = NORTH_POINT;
 		}
 		if (Direction == WEST_POINT)
 		{
-			TilePoint += Direction;
+			TilePoint += FIntPoint(Direction.X, Direction.Y);
 			Direction = EAST_POINT;
 		}
-		return Levels[LevelIndex].WallOverrides.Contains(FDungeonWallHash(TilePoint, Direction));
+		return Levels[LevelIndex].WallOverrides.Contains(FDungeonWallHash(TilePoint, FIntPoint(Direction.X, Direction.Y)));
 	}
 	
 	UFUNCTION(BlueprintCallable)
-	bool CreateWallOverride(int LevelIndex, FIntPoint TilePoint, FIntPoint Direction)
+	bool CreateWallOverride(int LevelIndex, FIntPoint TilePoint, FIntVector Direction)
 	{
 		if (!Levels.IsValidIndex(LevelIndex))
 			return false;
@@ -381,49 +460,49 @@ public:
 		
 		if (Direction == SOUTH_POINT)
 		{
-			TilePoint += Direction;
+			TilePoint += FIntPoint(Direction.X, Direction.Y);
 			Direction = NORTH_POINT;
 		}
 		if (Direction == WEST_POINT)
 		{
-			TilePoint += Direction;
+			TilePoint += FIntPoint(Direction.X, Direction.Y);
 			Direction = EAST_POINT;
 		}
 		// flip south and west, to north and east, to ensure tile points and directions
 		// are compacted to the shared space between them.
-		Levels[LevelIndex].WallOverrides.Emplace(FDungeonWallHash(TilePoint, Direction));
+		Levels[LevelIndex].WallOverrides.Emplace(FDungeonWallHash(TilePoint, FIntPoint(Direction.X, Direction.Y)));
 		RegenerateTiles();
 		return true;
 	}
 
 	UFUNCTION(BlueprintCallable)
-	bool DeleteWallOverride(int LevelIndex, FIntPoint TilePoint, FIntPoint Direction)
+	bool DeleteWallOverride(int LevelIndex, FIntPoint TilePoint, FIntVector Direction)
 	{
 		if (!Levels.IsValidIndex(LevelIndex))
 			return false;
 		
 		if (Direction == SOUTH_POINT)
 		{
-			TilePoint += Direction;
+			TilePoint += FIntPoint(Direction.X, Direction.Y);
 			Direction = NORTH_POINT;
 		}
 		if (Direction == WEST_POINT)
 		{
-			TilePoint += Direction;
+			TilePoint += FIntPoint(Direction.X, Direction.Y);
 			Direction = EAST_POINT;
 		}
-		Levels[LevelIndex].WallOverrides.Remove(FDungeonWallHash(TilePoint, Direction));
+		Levels[LevelIndex].WallOverrides.Remove(FDungeonWallHash(TilePoint, FIntPoint(Direction.X, Direction.Y)));
 		return true;
 	}
 	
 	UFUNCTION(BlueprintCallable)
-	bool IsBlocked(int LevelIndex, FIntPoint TilePoint, FIntPoint Direction)
+	bool IsBlocked(int LevelIndex, FIntPoint TilePoint, FIntVector Direction)
 	{
 		if (!Levels.IsValidIndex(LevelIndex))
 			return true;
 
 		FDungeonTile tile;
-		if (GetTile(LevelIndex, TilePoint + Direction, tile) && tile.Blocked)
+		if (GetTile(LevelIndex, TilePoint + FIntPoint(Direction.X, Direction.Y), tile) && tile.Blocked)
 			return true;
 
 		if (HasWallOverride(LevelIndex, TilePoint, Direction))
@@ -445,12 +524,18 @@ public:
 	UMaterial* SelectionMaterial;
 	
 	UPROPERTY()
+	UMaterial* PlusIconMaterial;
+	
+	UPROPERTY()
 	UMaterialInstanceDynamic* TileSelectedMaterial;
 
 	UPROPERTY()
 	UMaterialInstanceDynamic* TileUnselectedMaterial;
 	
 private:
+
+	UPROPERTY()
+	TArray<FMeshMaterialPair> SegmentPalette;
 	
 	UPROPERTY()
 	TMap<FMeshMaterialPair, UInstancedStaticMeshComponent*> InstancedStaticMeshComponents;

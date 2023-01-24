@@ -6,8 +6,7 @@
 #include "SceneManagement.h"
 
 const FEditorModeID FDungeoneerEdMode::EM_DungeoneerEdModeId = TEXT("EM_DungeoneerEdMode");
-IMPLEMENT_HIT_PROXY(HDungeonTileProxy, HHitProxy);
-IMPLEMENT_HIT_PROXY(HDungeonTileWallProxy, HHitProxy);
+IMPLEMENT_HIT_PROXY(HDungeonSelectionProxy, HHitProxy);
 
 FDungeoneerEdMode::FDungeoneerEdMode()
 {
@@ -35,10 +34,9 @@ void FDungeoneerEdMode::Enter()
 		}
 	}
 	if (!LevelDungeon)
-	{
 		LevelDungeon = World->SpawnActor<ADungeon>(ADungeon::StaticClass());
-	}
-	SelectedTiles.Empty();
+	
+	SegmentSelections.Empty();
 	ShiftHeld = false;
 	CtrlHeld = false;
 	
@@ -63,7 +61,7 @@ void FDungeoneerEdMode::Exit()
 
 void FDungeoneerEdMode::DrawHUD(FEditorViewportClient* ViewportClient, FViewport* Viewport, const FSceneView* View, FCanvas* Canvas)
 {
-	Canvas->DrawShadowedText(100, 200, FText::FromString("fuck you"), GEngine->GetLargeFont(), FLinearColor::White);
+	//Canvas->DrawShadowedText(100, 200, FText::FromString("test"), GEngine->GetLargeFont(), FLinearColor::White);
 	FEdMode::DrawHUD(ViewportClient, Viewport, View, Canvas);
 }
 
@@ -91,6 +89,8 @@ void FDungeoneerEdMode::Render(const FSceneView* View, FViewport* Viewport, FPri
 						TilePoints[t].X * LevelDungeon->DungeonScale,
 						TilePoints[t].Y * LevelDungeon->DungeonScale,
 						l * LevelDungeon->DungeonLevelZ);
+
+				/*
 				FBox FloorBox = FBox(
 					FVector(
 						LevelDungeon->DungeonScale * -0.5f,
@@ -100,36 +100,59 @@ void FDungeoneerEdMode::Render(const FSceneView* View, FViewport* Viewport, FPri
 						LevelDungeon->DungeonScale * 0.5f,
 						LevelDungeon->DungeonScale * 0.5f,
 						0) + WorldPosition);
+
 				
-				bool Selected = SelectedTiles.Contains(TilePoints[t]);
-				PDI->SetHitProxy(new HDungeonTileProxy(LevelDungeon, TilePoints[t]));
+				bool Selected = Selections.Contains(FDungeonSelection(l, TilePoints[t]));
+				PDI->SetHitProxy(new HDungeonSelectionProxy(LevelDungeon, l, TilePoints[t]));
 				DrawBox(PDI, FTransform(
 					FloorBox.GetCenter()).ToMatrixNoScale(),
 					FloorBox.GetExtent(),
 					Selected ? LevelDungeon->TileSelectedMaterial->GetRenderProxy() : LevelDungeon->TileUnselectedMaterial->GetRenderProxy(),
 					SDPG_Foreground);
 				PDI->SetHitProxy(NULL);
+				*/
 				
 				for (int i=0; i < DUNGEON_DIRECTIONS.Num(); i++)
 				{
-					if (LevelDungeon->HasTile(l, TilePoints[t] + DUNGEON_DIRECTIONS[i]))
+					EDungeonTileSegment Segment = (EDungeonTileSegment)i;
+					if ((Segment != EDungeonTileSegment::FLOOR && Segment != EDungeonTileSegment::CEILING) &&
+						LevelDungeon->HasTile(l, TilePoints[t] + FIntPoint(DUNGEON_DIRECTIONS[i].X, DUNGEON_DIRECTIONS[i].Y)))
 						continue;
-					
-					PDI->SetHitProxy(new HDungeonTileWallProxy(LevelDungeon, TilePoints[t], DUNGEON_DIRECTIONS[i]));
 
-					FVector extent = FVector(1.0f, LevelDungeon->DungeonScale * 0.5f, LevelDungeon->DungeonScale * 0.5f);
-					if (DUNGEON_DIRECTIONS[i] == EAST_POINT || DUNGEON_DIRECTIONS[i] == WEST_POINT)
-						extent = FVector(LevelDungeon->DungeonScale * 0.5f, 1, LevelDungeon->DungeonScale * 0.5f);
-					
-					FBox NorthWallBox = FBox::BuildAABB(
-						WorldPosition + (FVector(DUNGEON_DIRECTIONS[i].X * 0.5f, DUNGEON_DIRECTIONS[i].Y * 0.5f, 0.5f) * LevelDungeon->DungeonScale),
-						extent);
+					bool SelectedWall = SegmentSelections.Contains(FDungeonSegmentSelection(l, TilePoints[t], Segment));
+					PDI->SetHitProxy(new HDungeonSelectionProxy(LevelDungeon, l, TilePoints[t], Segment));
 
-					DrawBox(PDI, FTransform(
-						NorthWallBox.GetCenter()).ToMatrixNoScale(),
-						NorthWallBox.GetExtent(),
-						LevelDungeon->TileUnselectedMaterial->GetRenderProxy(),
-						SDPG_Foreground);
+					FVector center;
+					if (Segment == EDungeonTileSegment::FLOOR)
+						center = WorldPosition + FVector(0, 0, 1);
+					else if (Segment == EDungeonTileSegment::CEILING)
+						center = WorldPosition + FVector(0, 0, LevelDungeon->DungeonScale - 1);
+					else
+					{
+						center = FVector(
+							((DUNGEON_DIRECTIONS[i].X * 0.5f) * LevelDungeon->DungeonScale) - DUNGEON_DIRECTIONS[i].X,
+							((DUNGEON_DIRECTIONS[i].Y * 0.5f) * LevelDungeon->DungeonScale) - DUNGEON_DIRECTIONS[i].Y,
+							0.5f* LevelDungeon->DungeonScale) + WorldPosition;
+					}
+
+					DrawPlane10x10(PDI,
+						FTransform(DUNGEON_SEGMENT_ROTATIONS[i], center).ToMatrixNoScale(),
+						LevelDungeon->DungeonScale * 0.5f,
+						FVector2D(0, 0),
+						FVector2D(1, 1),
+						SelectedWall ? LevelDungeon->TileSelectedMaterial->GetRenderProxy() : LevelDungeon->TileUnselectedMaterial->GetRenderProxy(),
+						SDPG_World);
+
+					if (CtrlHeld)
+					{
+						DrawPlane10x10(PDI,
+							FTransform(DUNGEON_SEGMENT_ROTATIONS[i], center).ToMatrixNoScale(),
+							LevelDungeon->DungeonScale * 0.5f,
+							FVector2D(0, 0),
+							FVector2D(1, 1),
+							LevelDungeon->PlusIconMaterial->GetRenderProxy(),
+							SDPG_Foreground);
+					}
 					PDI->SetHitProxy(NULL);
 				}
 			}
@@ -157,10 +180,22 @@ bool FDungeoneerEdMode::InputKey(FEditorViewportClient* ViewportClient, FViewpor
 
 	if (Key == EKeys::Delete && Event == IE_Pressed)
 	{
-		for (int i=0; i < SelectedTiles.Num(); i++)
-			LevelDungeon->DeleteTile(0, SelectedTiles[i]);
+		/*
+		TArray<FDungeonSegmentSelection> RemovedSelections;
+		for (int i=0; i < Selections.Num(); i++)
+		{
+			if (Selections[i].IsTile())
+			{
+				LevelDungeon->DeleteTile(Selections[i].LevelIndex, Selections[i].TilePoint);
+				RemovedSelections.Emplace(Selections[i]);
+			}
+		}
 		
-		SelectedTiles.Empty();
+		// remove all the deleted tiles from selections.
+		// might need to check for override walls that were removed as a result
+		for (int i=0; i < RemovedSelections.Num(); i++)
+			Selections.Remove(RemovedSelections[i]);
+		*/
 	}
 	return FEdMode::InputKey(ViewportClient, Viewport, Key, Event);
 }
@@ -170,36 +205,42 @@ bool FDungeoneerEdMode::HandleClick(FEditorViewportClient* InViewportClient, HHi
 {
 	if (!HitProxy)
 	{
-		SelectedTiles.Empty();
+		SegmentSelections.Empty();
 		return FEdMode::HandleClick(InViewportClient, HitProxy, Click);
 	}
-	if (HitProxy->IsA(HDungeonTileProxy::StaticGetType()))
+	if (HitProxy->IsA(HDungeonSelectionProxy::StaticGetType()))
 	{
-		HDungeonTileProxy* TileProxy = (HDungeonTileProxy*)HitProxy;
+		HDungeonSelectionProxy* SelectionProxy = (HDungeonSelectionProxy*)HitProxy;
+		FDungeonSegmentSelection Selection = FDungeonSegmentSelection(
+			SelectionProxy->LevelIndex,
+			SelectionProxy->TilePoint,
+			SelectionProxy->Segment
+		);
 
+		
+		if (Selection.Segment != EDungeonTileSegment::FLOOR && Selection.Segment != EDungeonTileSegment::CEILING && Click.IsControlDown())
+		{
+			FIntVector direction = DUNGEON_DIRECTIONS[(int)SelectionProxy->Segment];
+			LevelDungeon->CreateTile(Selection.LevelIndex, Selection.TilePoint + FIntPoint(direction.X, direction.Y));
+			return true;
+		}
+		
+		
 		if (Click.IsShiftDown())
 		{
-			if (SelectedTiles.Contains(TileProxy->TilePoint))
-				SelectedTiles.Remove(TileProxy->TilePoint);
+			if (SegmentSelections.Contains(Selection))
+				SegmentSelections.Remove(Selection);
 			else
-				SelectedTiles.Emplace(TileProxy->TilePoint);	
+				SegmentSelections.Emplace(Selection);	
 		}
 		else
 		{
-			SelectedTiles.Empty();
-			SelectedTiles.Emplace(TileProxy->TilePoint);
+			SegmentSelections.Empty();
+			SegmentSelections.Emplace(Selection);
 		}
 		return true;
 	}
-	if (HitProxy->IsA(HDungeonTileWallProxy::StaticGetType()))
-	{
-		HDungeonTileWallProxy* TileWallProxy = (HDungeonTileWallProxy*)HitProxy;
-
-		FDungeonTile tile;
-		LevelDungeon->CreateTile(0, TileWallProxy->TilePoint + TileWallProxy->Direction, tile);
-	}
-
-	SelectedTiles.Empty();
+	SegmentSelections.Empty();
 	return FEdMode::HandleClick(InViewportClient, HitProxy, Click);
 }
 

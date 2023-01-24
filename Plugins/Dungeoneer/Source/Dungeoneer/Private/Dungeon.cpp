@@ -16,6 +16,9 @@ ADungeon::ADungeon()
 
 	static ConstructorHelpers::FObjectFinder<UMaterial> selection(TEXT("/Dungeoneer/selection-border-material.selection-border-material"));
 	SelectionMaterial = selection.Object;
+
+	static ConstructorHelpers::FObjectFinder<UMaterial> plusIcon(TEXT("/Dungeoneer/plus-icon-material.plus-icon-material"));
+	PlusIconMaterial = plusIcon.Object;
 }
 
 void ADungeon::OnConstruction(const FTransform& Transform)
@@ -26,19 +29,17 @@ void ADungeon::OnConstruction(const FTransform& Transform)
 
 void ADungeon::RegenerateTiles()
 {
+	TSet<UInstancedStaticMeshComponent*> UnusedISMCs;
 	for (const TPair<FMeshMaterialPair, UInstancedStaticMeshComponent*>& pair : InstancedStaticMeshComponents) {
-		pair.Value->UnregisterComponent();
-		pair.Value->DestroyComponent();
+		UnusedISMCs.Emplace(pair.Value);
 	}
-	InstancedStaticMeshComponents.Empty();
 
 	// if there are no floors, generate one with just one tile at 0,0
 	// to get things started.
 	if (Levels.Num() == 0)
-	{
 		CreateLevel();
-	}
 
+	TMap<UInstancedStaticMeshComponent*, TArray<FTransform>> NewTransforms;
 	TArray<FIntPoint> TilePoints;
 	for (int l=0; l < Levels.Num(); l++)
 	{
@@ -53,7 +54,7 @@ void ADungeon::RegenerateTiles()
 					FDungeonTile neighborTile;
 					if (s <= WALL_INDEX &&
 						!HasWallOverride(l, TilePoints[t], DUNGEON_DIRECTIONS[s]) &&
-						GetTile(l, TilePoints[t] + DUNGEON_DIRECTIONS[s], neighborTile))
+						GetTile(l, TilePoints[t] + FIntPoint(DUNGEON_DIRECTIONS[s].X, DUNGEON_DIRECTIONS[s].Y), neighborTile))
 					{
 						continue;
 					}
@@ -97,17 +98,34 @@ void ADungeon::RegenerateTiles()
 						material = DefaultPair.Material;
 					
 					UInstancedStaticMeshComponent* ISMC = GetInstancedStaticMeshComponent(material, mesh);
-					ISMC->AddInstance(FTransform(
+					if (!NewTransforms.Contains(ISMC))
+						NewTransforms.Emplace(ISMC, TArray<FTransform>());
+
+					NewTransforms[ISMC].Emplace(
+						FTransform(
 						DUNGEON_SEGMENT_ROTATIONS[s],
 						FVector(
 							TilePoints[t].X * DungeonScale,
 							TilePoints[t].Y * DungeonScale,
 							l * DungeonLevelZ)
-						)
-					);
+					));
+					UnusedISMCs.Remove(ISMC); // was used, so remove it from the unused.
 				}
 			}
 		}
+	}
+	
+	for (const TPair<UInstancedStaticMeshComponent*, TArray<FTransform>>& pair : NewTransforms)
+	{
+		pair.Key->ClearInstances();
+		pair.Key->AddInstances(pair.Value, false);
+	}
+
+	TArray<UInstancedStaticMeshComponent*> FinalUnusedISMCs = UnusedISMCs.Array();
+	for (int i=0; i < FinalUnusedISMCs.Num(); i++)
+	{
+		FinalUnusedISMCs[i]->UnregisterComponent();
+		FinalUnusedISMCs[i]->DestroyComponent();
 	}
 }
 
