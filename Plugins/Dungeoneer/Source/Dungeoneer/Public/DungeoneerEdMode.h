@@ -16,6 +16,18 @@ struct HDungeonSegmentProxy : public HHitProxy
 	EDungeonTileSegment Segment;
 };
 
+struct HDungeonTileProxy : public HHitProxy
+{
+	DECLARE_HIT_PROXY();
+	
+	HDungeonTileProxy(FIntVector tilePoint)
+		: HHitProxy(HPP_UI), TilePoint(tilePoint)
+	{}
+	
+	FIntVector TilePoint;
+};
+
+
 class FDungeoneerEdMode : public FEdMode
 {
 public:

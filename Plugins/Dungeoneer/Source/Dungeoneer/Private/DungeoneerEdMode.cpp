@@ -6,6 +6,7 @@
 
 const FEditorModeID FDungeoneerEdMode::EM_DungeoneerEdModeId = TEXT("EM_DungeoneerEdMode");
 IMPLEMENT_HIT_PROXY(HDungeonSegmentProxy, HHitProxy);
+IMPLEMENT_HIT_PROXY(HDungeonTileProxy, HHitProxy);
 
 
 void FDungeoneerEdMode::Enter()
@@ -68,6 +69,7 @@ void FDungeoneerEdMode::Render(const FSceneView* View, FViewport* Viewport, FPri
 {
 	if (LevelDungeon)
 	{
+		TSet<FIntVector> AddFeedback;
 		TArray<FIntVector> TilePoints;
 		LevelDungeon->GetTilePoints(TilePoints);
 		for (int t=0; t < TilePoints.Num(); t++)
@@ -84,39 +86,59 @@ void FDungeoneerEdMode::Render(const FSceneView* View, FViewport* Viewport, FPri
 				for (int s=0; s < Tile.Segments.Num(); s++)
 				{
 					EDungeonTileSegment Segment = (EDungeonTileSegment)s;
-					if (LevelDungeon->HasTile(TilePoints[t] + DUNGEON_DIRECTIONS[(int)Segment]))
+					if (LevelDungeon->HasTile(TilePoints[t] + DUNGEON_DIRECTIONS[s]))
 						continue;
-					
+
+					AddFeedback.Emplace(TilePoints[t] + DUNGEON_DIRECTIONS[s]);
 					FVector center = FVector(
 					((DUNGEON_DIRECTIONS[s].X * 0.5f) * LevelDungeon->Scale) - DUNGEON_DIRECTIONS[s].X,
 					((DUNGEON_DIRECTIONS[s].Y * 0.5f) * LevelDungeon->Scale) - DUNGEON_DIRECTIONS[s].Y,
 					((DUNGEON_DIRECTIONS[s].Z * 0.5f) * LevelDungeon->Scale) - DUNGEON_DIRECTIONS[s].Z);
-					center -= FVector(DUNGEON_DIRECTIONS[s].X, DUNGEON_DIRECTIONS[s].Y, DUNGEON_DIRECTIONS[s].Z) * 1;
-
-					
-					FRotator rotation = DUNGEON_SEGMENT_ROTATIONS[s];
+					center -= FVector(
+						DUNGEON_DIRECTIONS[s].X,
+						DUNGEON_DIRECTIONS[s].Y,
+						DUNGEON_DIRECTIONS[s].Z) * 1;
 
 					FDungeonSegmentSelection selection = FDungeonSegmentSelection(TilePoints[t], Segment);
 					bool selected = SegmentSelections.Contains(selection);
 					
 					PDI->SetHitProxy(new HDungeonSegmentProxy(TilePoints[t], Segment));
 					DrawPlane10x10(PDI,
-						FTransform(rotation, center + WorldPosition).ToMatrixNoScale(),
+						FTransform(
+							DUNGEON_SEGMENT_ROTATIONS[s],
+							center + WorldPosition).ToMatrixNoScale(),
 						(LevelDungeon->Scale * 0.5f) - 1,
 						FVector2D(0, 0),
 						FVector2D(1, 1),
-						selected ? LevelDungeon->TileSelectedMaterial->GetRenderProxy() : LevelDungeon->TileUnselectedMaterial->GetRenderProxy(),
+						selected ?
+							LevelDungeon->TileSelectedMaterial->GetRenderProxy() :
+							LevelDungeon->TileUnselectedMaterial->GetRenderProxy(),
 						SDPG_World);
 					PDI->SetHitProxy(NULL);
 				}
 			}
 		}
 
-
-		
+		TArray<FIntVector> _AddFeedback = AddFeedback.Array();
+		for (int i=0; i < _AddFeedback.Num(); i++)
+		{
+			FVector WorldPosition =
+			LevelDungeon->GetActorLocation() +
+			FVector(
+				_AddFeedback[i].X * LevelDungeon->Scale,
+				_AddFeedback[i].Y * LevelDungeon->Scale,
+				(_AddFeedback[i].Z * LevelDungeon->Scale) + (LevelDungeon->Scale * 0.5));
+			
+			PDI->SetHitProxy(new HDungeonTileProxy(_AddFeedback[i]));
+			DrawBox(
+				PDI,
+				FTransform(WorldPosition).ToMatrixNoScale(),
+				FVector((LevelDungeon->Scale * 0.5f) - 1),
+				LevelDungeon->TileSelectedMaterial->GetRenderProxy(),
+				SDPG_World);
+			PDI->SetHitProxy(NULL);
+		}
 	}
-
-	
 	FEdMode::Render(View, Viewport, PDI);
 }
 
@@ -132,29 +154,21 @@ bool FDungeoneerEdMode::HandleClick(FEditorViewportClient* InViewportClient, HHi
 	if (!HitProxy)
 		return FEdMode::HandleClick(InViewportClient, HitProxy, Click);
 
-
 	if (HitProxy->IsA(HDungeonSegmentProxy::StaticGetType()))
 	{
 		HDungeonSegmentProxy* SegmentProxy = (HDungeonSegmentProxy*)HitProxy;
-		if (Click.IsControlDown())
-		{
-			LevelDungeon->CreateTile(
-				SegmentProxy->TilePoint + DUNGEON_DIRECTIONS[(int)SegmentProxy->Segment],
-				LevelDungeon->DefaultTileTemplate);
-		}
-		else
-		{
-			
-			FDungeonSegmentSelection Selection = FDungeonSegmentSelection(SegmentProxy->TilePoint, SegmentProxy->Segment);
+		FDungeonSegmentSelection Selection = FDungeonSegmentSelection(SegmentProxy->TilePoint, SegmentProxy->Segment);
 
-			SegmentSelections.Empty();
-			SegmentSelections.Emplace(Selection);
-		}
-		
-
+		SegmentSelections.Empty();
+		SegmentSelections.Emplace(Selection);
+		return true;
 	}
-
-	
+	else if (HitProxy->IsA(HDungeonTileProxy::StaticGetType()))
+	{
+		HDungeonTileProxy* TileProxy = (HDungeonTileProxy*)HitProxy;
+		LevelDungeon->CreateTile(TileProxy->TilePoint, LevelDungeon->DefaultTileTemplate);
+		return true;
+	}
 	return FEdMode::HandleClick(InViewportClient, HitProxy, Click);
 }
 
