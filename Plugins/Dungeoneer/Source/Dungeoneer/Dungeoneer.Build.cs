@@ -41,6 +41,7 @@ public class Dungeoneer : ModuleRules
 				"InputCore",
 				"UnrealEd",
 				"LevelEditor",
+				"GameplayTags"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

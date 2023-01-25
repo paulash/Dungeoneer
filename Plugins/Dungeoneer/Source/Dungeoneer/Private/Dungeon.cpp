@@ -27,6 +27,14 @@ ADungeon::ADungeon()
 	
 	DefaultTileTemplate.Floor = DefaultFloor;
 	DefaultTileTemplate.Ceiling = DefaultCeiling;
+
+
+	// Editor Materials, exclude in non-editor builds?
+	static ConstructorHelpers::FObjectFinder<UMaterial> selection(TEXT("/Dungeoneer/selection-border-material.selection-border-material"));
+	SelectionMaterial = selection.Object;
+
+	static ConstructorHelpers::FObjectFinder<UMaterial> plusIcon(TEXT("/Dungeoneer/plus-icon-material.plus-icon-material"));
+	PlusIconMaterial = plusIcon.Object;
 }
 
 void ADungeon::OnConstruction(const FTransform& Transform)
@@ -56,7 +64,7 @@ void ADungeon::RegenerateTiles()
 			{
 				// if there is not an override, and there is a tile, in the direction
 				// of this segment, we dont render this segment.
-				if (!HasSegmentOverride(l, TilePoints[t], DUNGEON_DIRECTIONS[s]) &&
+				if (!HasSegmentOverride(TilePoints[t], (EDungeonTileSegment)s) &&
 					HasTile(TilePoints[t] + DUNGEON_DIRECTIONS[s]))
 				{
 					continue;
@@ -72,7 +80,8 @@ void ADungeon::RegenerateTiles()
 					FVector(
 						TilePoints[t].X * Scale,
 						TilePoints[t].Y * Scale,
-						TilePoints[t].Z * Scale)
+						TilePoints[t].Z * Scale + (Scale/2)),
+			FVector(Scale/100, Scale/100, Scale/100)
 				));
 				UnusedISMCs.Remove(ISMC); // was used, so remove it from the unused.
 			}
@@ -178,8 +187,6 @@ UInstancedStaticMeshComponent* ADungeon::GetInstancedStaticMeshComponent(FDungeo
 		AddInstanceComponent(ISMC);
 		ISMC->RegisterComponent();
 		ISMC->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-		ISMC->SetRelativeLocation(FVector(0,0, -(Scale/2)));
-		ISMC->SetAbsolute(false, true, true);
 		ISMC->SetStaticMesh(DungeonModel.Mesh);
 
 		for (int i=0; i < DungeonModel.Materials.Num(); i++)

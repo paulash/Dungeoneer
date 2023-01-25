@@ -37,8 +37,8 @@ enum class EDungeonTileSegment : uint8
 #define EAST_POINT FIntVector(0, 1, 0)
 #define SOUTH_POINT FIntVector(-1, 0, 0)
 #define WEST_POINT FIntVector(0, -1, 0)
-#define FLOOR_POINT FIntVector(0, 0, 1)
-#define CEILING_POINT FIntVector(0,0, -1)
+#define FLOOR_POINT FIntVector(0, 0, -1)
+#define CEILING_POINT FIntVector(0,0, 1)
 
 #define WALL_INDEX 3
 #define FLOOR_INDEX 4
@@ -58,7 +58,7 @@ const static TArray<FRotator> DUNGEON_SEGMENT_ROTATIONS = {
 	FRotator(0, 0, -90),		// EAST
 	FRotator(0, 90, -90),	// SOUTH
 	FRotator(180, 0, 90),	// WEST
-	FRotator(0, 0, 00),		// FLOOR
+	FRotator(0, 0, 0),		// FLOOR
 	FRotator(180, 0, 0),		// CEILING
 };
 
@@ -178,6 +178,63 @@ FORCEINLINE uint32 GetTypeHash(const FDungeonSegmentOverride& Thing)
 #endif
 
 USTRUCT(BlueprintType)
+struct FDungeonSegmentSelection
+{
+	GENERATED_BODY()
+
+public:
+
+
+	UPROPERTY()
+	FIntVector TilePoint;
+
+	UPROPERTY()
+	EDungeonTileSegment Segment;
+
+	FDungeonSegmentSelection()
+	{
+		TilePoint = FIntVector::ZeroValue;
+		Segment = EDungeonTileSegment::NORTH_WALL;
+	}
+
+	FDungeonSegmentSelection(FIntVector _TilePoint, EDungeonTileSegment _Segment)
+	{
+		TilePoint = _TilePoint;
+		Segment = _Segment;
+	}
+
+	bool operator==(const FDungeonSegmentSelection& Other) const
+	{
+		return Equals(Other);
+	}
+
+	bool operator!=(const FDungeonSegmentSelection& Other) const
+	{
+		return !Equals(Other);
+	}
+
+	bool Equals(const FDungeonSegmentSelection& Other) const
+	{
+		return
+			TilePoint == Other.TilePoint &&
+			Segment == Other.Segment;
+	}
+};
+#if UE_BUILD_DEBUG // debuggable and slower.
+uint32 GetTypeHash(const FDungeonSegmentSelection& Thing)
+{
+	uint32 Hash = FCrc::MemCrc32(&Thing, sizeof(FDungeonSegmentSelection));
+	return Hash;
+}
+#else // optimize by inlining in shipping and development builds
+FORCEINLINE uint32 GetTypeHash(const FDungeonSegmentSelection& Thing)
+{
+	uint32 Hash = FCrc::MemCrc32(&Thing, sizeof(FDungeonSegmentSelection));
+	return Hash;
+}
+#endif
+
+USTRUCT(BlueprintType)
 struct FDungeonSegment
 {
 	GENERATED_BODY();
@@ -234,7 +291,7 @@ public:
 	FDungeonModel Ceiling;
 };
 
-UCLASS(BlueprintType, NotBlueprintable)
+UCLASS(NotPlaceable, BlueprintType, NotBlueprintable)
 class ADungeon final : public AActor
 {
 	GENERATED_BODY()
@@ -251,16 +308,19 @@ public:
 	float Scale = 100.0f;
 
 	UPROPERTY(EditAnywhere)
-	FDungeonModel DefaultFloor;
-
-	UPROPERTY(EditAnywhere)
-	FDungeonModel DefaultWall;
-
-	UPROPERTY(EditAnywhere)
-	FDungeonModel DefaultCeiling;
-
-	UPROPERTY(EditAnywhere)
 	FDungeonTileTemplate DefaultTileTemplate;
+
+	UPROPERTY()
+	UMaterial* SelectionMaterial;
+	
+	UPROPERTY()
+	UMaterial* PlusIconMaterial;
+
+	UPROPERTY()
+	UMaterialInstanceDynamic* TileSelectedMaterial;
+
+	UPROPERTY()
+	UMaterialInstanceDynamic* TileUnselectedMaterial;
 	
 	// Tiles
 	UFUNCTION(BlueprintCallable)
@@ -285,9 +345,22 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool DeleteSegmentOverride(FIntVector TilePoint, EDungeonTileSegment Segment);
 
+	void GetTilePoints(TArray<FIntVector>& TilePoints)
+	{
+		TilePoints.Empty(Tiles.Num());
+		Tiles.GetKeys(TilePoints);
+	};
+	
 private:
 	
-	
+	UPROPERTY(EditAnywhere)
+	FDungeonModel DefaultFloor;
+
+	UPROPERTY(EditAnywhere)
+	FDungeonModel DefaultWall;
+
+	UPROPERTY(EditAnywhere)
+	FDungeonModel DefaultCeiling;
 
 	// the actual tiles within the dungeon.
 	UPROPERTY()
