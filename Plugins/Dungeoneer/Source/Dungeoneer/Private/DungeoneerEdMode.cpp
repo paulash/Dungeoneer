@@ -40,6 +40,7 @@ void FDungeoneerEdMode::Enter()
 		}
 	}
 	SegmentSelections.Empty();
+	ControlHeld = false;
 	
 	if (!Toolkit.IsValid() && UsesToolkits())
 	{
@@ -119,24 +120,27 @@ void FDungeoneerEdMode::Render(const FSceneView* View, FViewport* Viewport, FPri
 			}
 		}
 
-		TArray<FIntVector> _AddFeedback = AddFeedback.Array();
-		for (int i=0; i < _AddFeedback.Num(); i++)
+		if (ControlHeld)
 		{
-			FVector WorldPosition =
-			LevelDungeon->GetActorLocation() +
-			FVector(
-				_AddFeedback[i].X * LevelDungeon->Scale,
-				_AddFeedback[i].Y * LevelDungeon->Scale,
-				(_AddFeedback[i].Z * LevelDungeon->Scale) + (LevelDungeon->Scale * 0.5));
+			TArray<FIntVector> _AddFeedback = AddFeedback.Array();
+			for (int i=0; i < _AddFeedback.Num(); i++)
+			{
+				FVector WorldPosition =
+				LevelDungeon->GetActorLocation() +
+				FVector(
+					_AddFeedback[i].X * LevelDungeon->Scale,
+					_AddFeedback[i].Y * LevelDungeon->Scale,
+					(_AddFeedback[i].Z * LevelDungeon->Scale) + (LevelDungeon->Scale * 0.5));
 			
-			PDI->SetHitProxy(new HDungeonTileProxy(_AddFeedback[i]));
-			DrawBox(
-				PDI,
-				FTransform(WorldPosition).ToMatrixNoScale(),
-				FVector((LevelDungeon->Scale * 0.5f) - 1),
-				LevelDungeon->TileSelectedMaterial->GetRenderProxy(),
-				SDPG_World);
-			PDI->SetHitProxy(NULL);
+				PDI->SetHitProxy(new HDungeonTileProxy(_AddFeedback[i]));
+				DrawBox(
+					PDI,
+					FTransform(WorldPosition).ToMatrixNoScale(),
+					FVector((LevelDungeon->Scale * 0.5f) - 1),
+					LevelDungeon->TileUnselectedMaterial->GetRenderProxy(),
+					SDPG_World);
+				PDI->SetHitProxy(NULL);
+			}
 		}
 	}
 	FEdMode::Render(View, Viewport, PDI);
@@ -145,6 +149,12 @@ void FDungeoneerEdMode::Render(const FSceneView* View, FViewport* Viewport, FPri
 bool FDungeoneerEdMode::InputKey(FEditorViewportClient* ViewportClient, FViewport* Viewport, FKey Key,
 	EInputEvent Event)
 {
+	if ((Key == EKeys::LeftControl || Key == EKeys::RightControl) &&
+		(Event == IE_Pressed || Event == IE_Released))
+	{
+		ControlHeld = Event == IE_Pressed;
+	}
+	
 	return FEdMode::InputKey(ViewportClient, Viewport, Key, Event);
 }
 

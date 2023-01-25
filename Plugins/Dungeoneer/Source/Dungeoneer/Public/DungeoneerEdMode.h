@@ -54,6 +54,8 @@ public:
 
 private:
 
+	bool ControlHeld = false;
+
 	TSet<FDungeonSegmentSelection> SegmentSelections;
 	ADungeon* LevelDungeon = NULL;
 };
