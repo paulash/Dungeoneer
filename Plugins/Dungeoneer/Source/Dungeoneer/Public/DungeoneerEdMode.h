@@ -44,6 +44,7 @@ public:
 
 	virtual bool InputKey(FEditorViewportClient* ViewportClient, FViewport* Viewport, FKey Key, EInputEvent Event) override;
 	virtual bool HandleClick(FEditorViewportClient* InViewportClient, HHitProxy* HitProxy, const FViewportClick& Click) override;
+	virtual bool MouseMove(FEditorViewportClient* ViewportClient, FViewport* Viewport, int32 x, int32 y) override;
 	
 	bool UsesToolkits() const override;
 	// End of FEdMode interface
@@ -56,6 +57,8 @@ private:
 
 	bool ControlHeld = false;
 
-	TSet<FDungeonSegmentSelection> SegmentSelections;
+	bool HasHoveredSegment = false;
+	FDungeonTileSegmentHash HoveredSegment;
+	TSet<FDungeonTileSegmentHash> SegmentSelections;
 	ADungeon* LevelDungeon = NULL;
 };

@@ -52,7 +52,7 @@ void ADungeon::RegenerateTiles()
 	for (const TPair<FDungeonModel, UInstancedStaticMeshComponent*>& pair : ISMCs)
 		UnusedISMCs.Emplace(pair.Value);
 
-	TMap<UInstancedStaticMeshComponent*, TArray<FTransform>> NewTransforms;
+	TMap<UInstancedStaticMeshComponent*, TArray<FDungeonTileSegmentHash>> SegmentHashes;
 	TArray<FIntVector> TilePoints;
 	Tiles.GetKeys(TilePoints);
 	for (int t=0; t < TilePoints.Num(); t++)
@@ -71,33 +71,42 @@ void ADungeon::RegenerateTiles()
 				}
 
 				UInstancedStaticMeshComponent* ISMC = GetInstancedStaticMeshComponent(Tile.Segments[s].Model);
-				if (!NewTransforms.Contains(ISMC))
-					NewTransforms.Emplace(ISMC, TArray<FTransform>());
-
-				NewTransforms[ISMC].Emplace(
-					FTransform(
-					DUNGEON_SEGMENT_ROTATIONS[s],
-					FVector(
-						TilePoints[t].X * Scale,
-						TilePoints[t].Y * Scale,
-						TilePoints[t].Z * Scale + (Scale/2)),
-			FVector(Scale/100, Scale/100, Scale/100)
-				));
+				if (!SegmentHashes.Contains(ISMC))
+					SegmentHashes.Emplace(ISMC, TArray<FDungeonTileSegmentHash>());
+				
+				SegmentHashes[ISMC].Emplace(FDungeonTileSegmentHash(TilePoints[t], (EDungeonTileSegment)s));
 				UnusedISMCs.Remove(ISMC); // was used, so remove it from the unused.
 			}
 		}
 	}
 
 	// clear and apply the new instances.
-	for (const TPair<UInstancedStaticMeshComponent*, TArray<FTransform>>& pair : NewTransforms)
+	for (const TPair<UInstancedStaticMeshComponent*, TArray<FDungeonTileSegmentHash>>& pair : SegmentHashes)
 	{
+		if (ISMCSegmentHash.Contains(pair.Key))
+			ISMCSegmentHash.Remove(pair.Key);
+		
+		TArray<FTransform> SegmentTransforms;
+		for (int i=0; i < pair.Value.Num(); i++)
+		{
+			FTransform Transform = FTransform(
+				DUNGEON_SEGMENT_ROTATIONS[(int)pair.Value[i].Segment],
+				FVector(
+					pair.Value[i].TilePoint.X * Scale,
+					pair.Value[i].TilePoint.Y * Scale,
+					pair.Value[i].TilePoint.Z * Scale + (Scale/2)),
+				FVector(Scale/100, Scale/100, Scale/100));
+			SegmentTransforms.Emplace(Transform);
+		}
 		pair.Key->ClearInstances();
-		pair.Key->AddInstances(pair.Value, false);
+		pair.Key->AddInstances(SegmentTransforms, false);
+		ISMCSegmentHash.Emplace(pair.Key, pair.Value);
 	}
 
 	TArray<UInstancedStaticMeshComponent*> FinalUnusedISMCs = UnusedISMCs.Array();
 	for (int i=0; i < FinalUnusedISMCs.Num(); i++)
 	{
+		ISMCSegmentHash.Remove(FinalUnusedISMCs[i]);
 		FinalUnusedISMCs[i]->UnregisterComponent();
 		FinalUnusedISMCs[i]->DestroyComponent();
 	}

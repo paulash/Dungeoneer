@@ -178,7 +178,7 @@ FORCEINLINE uint32 GetTypeHash(const FDungeonSegmentOverride& Thing)
 #endif
 
 USTRUCT(BlueprintType)
-struct FDungeonSegmentSelection
+struct FDungeonTileSegmentHash
 {
 	GENERATED_BODY()
 
@@ -191,29 +191,29 @@ public:
 	UPROPERTY()
 	EDungeonTileSegment Segment;
 
-	FDungeonSegmentSelection()
+	FDungeonTileSegmentHash()
 	{
 		TilePoint = FIntVector::ZeroValue;
 		Segment = EDungeonTileSegment::NORTH_WALL;
 	}
 
-	FDungeonSegmentSelection(FIntVector _TilePoint, EDungeonTileSegment _Segment)
+	FDungeonTileSegmentHash(FIntVector _TilePoint, EDungeonTileSegment _Segment)
 	{
 		TilePoint = _TilePoint;
 		Segment = _Segment;
 	}
 
-	bool operator==(const FDungeonSegmentSelection& Other) const
+	bool operator==(const FDungeonTileSegmentHash& Other) const
 	{
 		return Equals(Other);
 	}
 
-	bool operator!=(const FDungeonSegmentSelection& Other) const
+	bool operator!=(const FDungeonTileSegmentHash& Other) const
 	{
 		return !Equals(Other);
 	}
 
-	bool Equals(const FDungeonSegmentSelection& Other) const
+	bool Equals(const FDungeonTileSegmentHash& Other) const
 	{
 		return
 			TilePoint == Other.TilePoint &&
@@ -221,18 +221,19 @@ public:
 	}
 };
 #if UE_BUILD_DEBUG // debuggable and slower.
-uint32 GetTypeHash(const FDungeonSegmentSelection& Thing)
+uint32 GetTypeHash(const FDungeonTileSegmentHash& Thing)
 {
-	uint32 Hash = FCrc::MemCrc32(&Thing, sizeof(FDungeonSegmentSelection));
+	uint32 Hash = FCrc::MemCrc32(&Thing, sizeof(FDungeonTileSegmentHash));
 	return Hash;
 }
 #else // optimize by inlining in shipping and development builds
-FORCEINLINE uint32 GetTypeHash(const FDungeonSegmentSelection& Thing)
+FORCEINLINE uint32 GetTypeHash(const FDungeonTileSegmentHash& Thing)
 {
-	uint32 Hash = FCrc::MemCrc32(&Thing, sizeof(FDungeonSegmentSelection));
+	uint32 Hash = FCrc::MemCrc32(&Thing, sizeof(FDungeonTileSegmentHash));
 	return Hash;
 }
 #endif
+
 
 USTRUCT(BlueprintType)
 struct FDungeonSegment
@@ -350,6 +351,16 @@ public:
 		TilePoints.Empty(Tiles.Num());
 		Tiles.GetKeys(TilePoints);
 	};
+
+	void GetISMCs(TArray<UInstancedStaticMeshComponent*>& _ISMCs)
+	{
+		_ISMCs.Empty(ISMCs.Num());
+		for (const TPair<FDungeonModel, UInstancedStaticMeshComponent*>& pair : ISMCs)
+			_ISMCs.Emplace(pair.Value);
+	}
+
+		
+	TMap<UInstancedStaticMeshComponent*, TArray<FDungeonTileSegmentHash>> ISMCSegmentHash;
 	
 private:
 	
