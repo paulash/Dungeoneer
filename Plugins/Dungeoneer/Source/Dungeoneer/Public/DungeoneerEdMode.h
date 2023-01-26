@@ -59,6 +59,6 @@ private:
 
 	bool HasHoveredSegment = false;
 	FDungeonTileSegmentHash HoveredSegment;
-	TSet<FDungeonTileSegmentHash> SegmentSelections;
+	TArray<FDungeonTileSegmentHash> SegmentSelections;
 	ADungeon* LevelDungeon = NULL;
 };

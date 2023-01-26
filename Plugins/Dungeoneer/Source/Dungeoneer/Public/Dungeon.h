@@ -322,6 +322,12 @@ public:
 
 	UPROPERTY()
 	UMaterialInstanceDynamic* TileUnselectedMaterial;
+
+	UPROPERTY()
+	UMaterialInstanceDynamic* TileHoveredUnselectedMaterial;
+
+	UPROPERTY()
+	UMaterialInstanceDynamic* TileHoveredSelectedMaterial;
 	
 	// Tiles
 	UFUNCTION(BlueprintCallable)

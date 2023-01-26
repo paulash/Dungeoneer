@@ -95,7 +95,7 @@ void ADungeon::RegenerateTiles()
 					pair.Value[i].TilePoint.X * Scale,
 					pair.Value[i].TilePoint.Y * Scale,
 					pair.Value[i].TilePoint.Z * Scale + (Scale/2)),
-				FVector(Scale/100, Scale/100, Scale/100));
+				FVector(Scale/100 + 0.001f, Scale/100 + 0.001f, Scale/100 + 0.001f));
 			SegmentTransforms.Emplace(Transform);
 		}
 		pair.Key->ClearInstances();
@@ -148,7 +148,7 @@ bool ADungeon::GetTile(FIntVector TilePoint, FDungeonTile& Tile)
 
 bool ADungeon::DeleteTile(FIntVector TilePoint)
 {
-	if (Tiles.Contains(TilePoint))
+	if (!Tiles.Contains(TilePoint))
 		return false;
 
 	Tiles.Remove(TilePoint);
