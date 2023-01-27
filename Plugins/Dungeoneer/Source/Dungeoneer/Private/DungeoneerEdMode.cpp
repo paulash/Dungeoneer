@@ -205,7 +205,12 @@ bool FDungeoneerEdMode::HandleClick(FEditorViewportClient* InViewportClient, HHi
 				SegmentSelections.Empty();
 
 			if (!SegmentSelections.Contains(Selection))
+			{
+				FDungeoneerEdModeToolkit* DungeoneerToolkit = (FDungeoneerEdModeToolkit*)Toolkit.Get();
+				DungeoneerToolkit->SelectTileSegment(LevelDungeon, Selection);
 				SegmentSelections.Emplace(Selection);
+			}
+				
 		}
 		return true;
 	}

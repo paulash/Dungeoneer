@@ -13,6 +13,18 @@ FDungeoneerEdModeToolkit::FDungeoneerEdModeToolkit()
 
 void FDungeoneerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitHost)
 {
+	FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+	FStructOnScope* NewStructOnScope = new FStructOnScope(FDungeonTileTemplate::StaticStruct(), NULL);
+
+	FDetailsViewArgs DetailsViewArgs;
+	FStructureDetailsViewArgs StructureDetailsViewArgs;
+	Details = PropertyEditorModule.CreateStructureDetailView(
+		DetailsViewArgs,
+		StructureDetailsViewArgs,
+		MakeShareable(NewStructOnScope),
+		FText::FromString("Tile Properties")
+	);
+	
 	SAssignNew(ToolkitWidget, SBorder)
 		[
 			SNew(SVerticalBox)
@@ -22,6 +34,10 @@ void FDungeoneerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 				SNew(STextBlock)
 				.AutoWrapText(true)
 				.Text(LOCTEXT("HelperLabel", "Select some actors and move them around using buttons below"))
+				
+			]
+			+SVerticalBox::Slot().Padding(1)[
+				Details->GetWidget().ToSharedRef()
 			]
 		];
 		
@@ -36,6 +52,12 @@ FName FDungeoneerEdModeToolkit::GetToolkitFName() const
 FText FDungeoneerEdModeToolkit::GetBaseToolkitName() const
 {
 	return NSLOCTEXT("DungeoneerEdModeToolkit", "DisplayName", "DungeoneerEdMode Tool");
+}
+
+void FDungeoneerEdModeToolkit::SelectTileSegment(ADungeon* LevelDungeon, FDungeonTileSegmentHash selected)
+{
+	FStructOnScope* NewStructOnScope = new FStructOnScope(FDungeonTileTemplate::StaticStruct(), (uint8*)&LevelDungeon->DefaultTileTemplate);
+	Details->SetStructureData(MakeShareable(NewStructOnScope));
 }
 
 class FEdMode* FDungeoneerEdModeToolkit::GetEditorMode() const

@@ -55,11 +55,11 @@ const static TArray<FIntVector> DUNGEON_DIRECTIONS = {
 
 const static TArray<FRotator> DUNGEON_SEGMENT_ROTATIONS = {
 	FRotator(180, 90, 90),	// NORTH
-	FRotator(0, 0, -90),		// EAST
+	FRotator(0, 0, -90),	// EAST
 	FRotator(0, 90, -90),	// SOUTH
 	FRotator(180, 0, 90),	// WEST
 	FRotator(0, 0, 0),		// FLOOR
-	FRotator(180, 0, 0),		// CEILING
+	FRotator(180, 0, 0),	// CEILING
 };
 
 USTRUCT(BlueprintType)
@@ -311,6 +311,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	FDungeonTileTemplate DefaultTileTemplate;
 
+	UPROPERTY(EditAnywhere)
+	TArray<FDungeonTileTemplate> TileTemplates;
+
 	UPROPERTY()
 	UMaterial* SelectionMaterial;
 	
@@ -367,6 +370,10 @@ public:
 
 		
 	TMap<UInstancedStaticMeshComponent*, TArray<FDungeonTileSegmentHash>> ISMCSegmentHash;
+
+	// the actual tiles within the dungeon.
+	UPROPERTY()
+	TMap<FIntVector, FDungeonTile> Tiles;
 	
 private:
 	
@@ -378,10 +385,6 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	FDungeonModel DefaultCeiling;
-
-	// the actual tiles within the dungeon.
-	UPROPERTY()
-	TMap<FIntVector, FDungeonTile> Tiles;
 
 	// segment override flags to force segments to be visible when there
 	// is a neighbour in that direction.
