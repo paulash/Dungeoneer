@@ -1,6 +1,8 @@
 #include "Dungeon.h"
 #include "UObject/ConstructorHelpers.h"
 
+#define LOCTEXT_NAMESPACE "FDungeoneerEdModeToolkit"
+
 ADungeon::ADungeon()
 {
 	RootComponent = CreateDefaultSubobject<USceneComponent>("Root");
@@ -11,16 +13,6 @@ ADungeon::ADungeon()
 	static ConstructorHelpers::FObjectFinder<UMaterial> ceiling(TEXT("/Dungeoneer/basic-ceiling-material.basic-ceiling-material"));
 
 	DungeonQuad = quad.Object;
-
-	/*
-	DefaultSegmentMaterials.SetNum(DUNGEON_SEGMENT_COUNT);
-	DefaultSegmentMaterials[(int)EDungeonDirection::NORTH] = wall.Object;
-	DefaultSegmentMaterials[(int)EDungeonDirection::EAST] = wall.Object;
-	DefaultSegmentMaterials[(int)EDungeonDirection::SOUTH] = wall.Object;
-	DefaultSegmentMaterials[(int)EDungeonDirection::WEST] = wall.Object;
-	DefaultSegmentMaterials[(int)EDungeonDirection::DOWN] = floor.Object;
-	DefaultSegmentMaterials[(int)EDungeonDirection::UP] = ceiling.Object;
-	*/
 
 	FDungeonSegmentTemplate WallTemplate;
 	WallTemplate.Mesh = DungeonQuad;
@@ -58,6 +50,9 @@ void ADungeon::OnConstruction(const FTransform& Transform)
 void ADungeon::CreateTile(FIntVector TilePoint)
 {
 	if (Tiles.Contains(TilePoint)) return;
+
+	GEditor->BeginTransaction(LOCTEXT("MoveActorsTransactionName", "MoveActors"));
+	Modify();
 	
 	FDungeonTile NewTile = FDungeonTile();
 	NewTile.SegmentTemplates[(int)EDungeonDirection::NORTH] = "DEFAULT_WALL";
@@ -68,6 +63,8 @@ void ADungeon::CreateTile(FIntVector TilePoint)
 	NewTile.SegmentTemplates[(int)EDungeonDirection::UP] = "DEFAULT_CEILING";
 	
 	Tiles.Emplace(TilePoint, NewTile);
+	GEditor->EndTransaction();
+	
 	RegenerateTiles();
 }
 
@@ -82,6 +79,7 @@ void ADungeon::SetSegmentMaterial(FIntVector TilePoint, EDungeonDirection Segmen
 {
 	if (Tiles.Contains(TilePoint)) return;
 	Tiles[TilePoint].SegmentTemplates[(int)Segment] = Template;
+	RegenerateTiles();
 }
 
 void ADungeon::RegenerateTiles()
@@ -126,12 +124,14 @@ void ADungeon::RegenerateTiles()
 	{
 		TArray<FTransform> Transforms = BatchedInstances[Templates[i]];
 		UInstancedStaticMeshComponent* ISMC = GetInstancedMeshComponent(Templates[i]);
+		if (!ISMC) continue;
 		ISMC->AddInstances(Transforms, false);
 	}
 }
 
 UInstancedStaticMeshComponent* ADungeon::GetInstancedMeshComponent(FName TemplateName)
 {
+	if (!SegmentTemplates.Contains(TemplateName)) return NULL;
 	FDungeonSegmentTemplate Template = SegmentTemplates.FindRef(TemplateName);
 	UInstancedStaticMeshComponent* ISMC = ISMCs.FindRef(TemplateName);
 	if (!ISMC)
