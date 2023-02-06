@@ -48,6 +48,20 @@ const static TArray<FIntVector> DUNGEON_DIRECTIONS = {
 };
 
 USTRUCT()
+struct FDungeonSegmentTemplate
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(EditAnywhere)
+	TArray<UMaterial*> Materials;
+
+	UPROPERTY(EditAnywhere)
+	UStaticMesh* Mesh;
+};
+
+USTRUCT()
 struct FDungeonTile
 {
 	GENERATED_BODY()
@@ -55,14 +69,14 @@ struct FDungeonTile
 public:
 
 	UPROPERTY(EditAnywhere)
-	TArray<UMaterial*> SegmentMaterials;
+	TArray<FName> SegmentTemplates;
 
 	UPROPERTY(EditAnywhere)
 	FGameplayTagContainer Tags;
 
 	FDungeonTile()
 	{
-		SegmentMaterials.SetNum(DUNGEON_SEGMENT_COUNT);
+		SegmentTemplates.SetNum(DUNGEON_SEGMENT_COUNT);
 	}
 };
 
@@ -100,13 +114,10 @@ public:
 
 	UPROPERTY()
 	UMaterialInstanceDynamic* TileHoveredSelectedMaterial;
-	
-	UPROPERTY(EditAnywhere)
-	TArray<UMaterial*> DefaultSegmentMaterials;
 
 	void CreateTile(FIntVector TilePoint);
 	void DeleteTile(FIntVector TilePoint);
-	void SetSegmentMaterial(FIntVector TilePoint, EDungeonDirection Segment, UMaterial* NewMaterial);
+	void SetSegmentMaterial(FIntVector TilePoint, EDungeonDirection Segment, FName Template);
 	void RegenerateTiles();
 
 private:
@@ -115,7 +126,10 @@ private:
 	UStaticMesh* DungeonQuad;
 	
 	UPROPERTY()
-	TMap<UMaterial*, UInstancedStaticMeshComponent*> ISMCs;
+	TMap<FName, UInstancedStaticMeshComponent*> ISMCs;
 
-	UInstancedStaticMeshComponent* GetInstancedMeshComponent(UMaterial* Material);
+	UPROPERTY(EditAnywhere)
+	TMap<FName, FDungeonSegmentTemplate> SegmentTemplates;
+
+	UInstancedStaticMeshComponent* GetInstancedMeshComponent(FName TemplateName);
 };
