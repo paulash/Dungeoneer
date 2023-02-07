@@ -17,17 +17,17 @@ ADungeon::ADungeon()
 	FDungeonSegmentTemplate WallTemplate;
 	WallTemplate.Mesh = DungeonQuad;
 	WallTemplate.Materials = { wall.Object };
-	SegmentTemplates.Emplace("DEFAULT_WALL", WallTemplate);
+	DungeonPalette.SegmentTemplates.Emplace("DEFAULT_WALL", WallTemplate);
 
 	FDungeonSegmentTemplate FloorTemplate;
 	FloorTemplate.Mesh = DungeonQuad;
 	FloorTemplate.Materials = { floor.Object };
-	SegmentTemplates.Emplace("DEFAULT_FLOOR", WallTemplate);
+	DungeonPalette.SegmentTemplates.Emplace("DEFAULT_FLOOR", WallTemplate);
 
 	FDungeonSegmentTemplate CeilingTemplate;
 	CeilingTemplate.Mesh = DungeonQuad;
 	CeilingTemplate.Materials = { ceiling.Object };
-	SegmentTemplates.Emplace("DEFAULT_CEILING", CeilingTemplate);
+	DungeonPalette.SegmentTemplates.Emplace("DEFAULT_CEILING", CeilingTemplate);
 
 	// Editor Materials, exclude in non-editor builds?
 	static ConstructorHelpers::FObjectFinder<UMaterial> selection(TEXT("/Dungeoneer/selection-border-material.selection-border-material"));
@@ -51,7 +51,9 @@ void ADungeon::CreateTile(FIntVector TilePoint)
 {
 	if (Tiles.Contains(TilePoint)) return;
 
-	GEditor->BeginTransaction(LOCTEXT("MoveActorsTransactionName", "MoveActors"));
+#ifdef WITH_EDITOR
+	GEditor->BeginTransaction(LOCTEXT("AddTileTransactionName", "Add Tile"));
+#endif
 	Modify();
 	
 	FDungeonTile NewTile = FDungeonTile();
@@ -63,7 +65,10 @@ void ADungeon::CreateTile(FIntVector TilePoint)
 	NewTile.SegmentTemplates[(int)EDungeonDirection::UP] = "DEFAULT_CEILING";
 	
 	Tiles.Emplace(TilePoint, NewTile);
+
+#ifdef WITH_EDITOR
 	GEditor->EndTransaction();
+#endif
 	
 	RegenerateTiles();
 }
@@ -71,23 +76,47 @@ void ADungeon::CreateTile(FIntVector TilePoint)
 void ADungeon::DeleteTile(FIntVector TilePoint)
 {
 	if (!Tiles.Contains(TilePoint)) return;
+
+#ifdef WITH_EDITOR
+	GEditor->BeginTransaction(LOCTEXT("DeleteTileTransactionName", "Delete Tile"));
+#endif
+	Modify();
 	Tiles.Remove(TilePoint);
+#ifdef WITH_EDITOR
+	GEditor->EndTransaction();
+#endif
+	
 	RegenerateTiles();
 }
 
 void ADungeon::SetSegmentMaterial(FIntVector TilePoint, EDungeonDirection Segment, FName Template)
 {
 	if (Tiles.Contains(TilePoint)) return;
+
+#ifdef WITH_EDITOR
+	GEditor->BeginTransaction(LOCTEXT("PaintTileTransactionName", "Paint Tile"));
+#endif
+	Modify();
 	Tiles[TilePoint].SegmentTemplates[(int)Segment] = Template;
+#ifdef WITH_EDITOR
+	GEditor->EndTransaction();
+#endif
+	
 	RegenerateTiles();
 }
 
 void ADungeon::RegenerateTiles()
 {
-	for (const TPair<FName, UInstancedStaticMeshComponent*>& pair : ISMCs)
+	TArray<UActorComponent*> CurrentISMCs;
+	GetComponents(UInstancedStaticMeshComponent::StaticClass(), CurrentISMCs);
+	
+	for (int i=0; i < CurrentISMCs.Num(); i++)
 	{
-		pair.Value->UnregisterComponent();
-		pair.Value->DestroyComponent();
+		UInstancedStaticMeshComponent* ISMC = Cast<UInstancedStaticMeshComponent>(CurrentISMCs[i]);
+		if (!ISMC) continue;
+
+		ISMC->UnregisterComponent();
+		ISMC->DestroyComponent();
 	}
 	ISMCs.Empty();
 	
@@ -131,8 +160,8 @@ void ADungeon::RegenerateTiles()
 
 UInstancedStaticMeshComponent* ADungeon::GetInstancedMeshComponent(FName TemplateName)
 {
-	if (!SegmentTemplates.Contains(TemplateName)) return NULL;
-	FDungeonSegmentTemplate Template = SegmentTemplates.FindRef(TemplateName);
+	if (!DungeonPalette.SegmentTemplates.Contains(TemplateName)) return NULL;
+	FDungeonSegmentTemplate Template = DungeonPalette.SegmentTemplates.FindRef(TemplateName);
 	UInstancedStaticMeshComponent* ISMC = ISMCs.FindRef(TemplateName);
 	if (!ISMC)
 	{

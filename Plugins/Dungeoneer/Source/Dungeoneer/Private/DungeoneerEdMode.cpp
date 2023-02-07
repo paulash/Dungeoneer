@@ -62,6 +62,7 @@ void FDungeoneerEdMode::Enter()
 	if (!Toolkit.IsValid() && UsesToolkits())
 	{
 		Toolkit = MakeShareable(new FDungeoneerEdModeToolkit);
+		GetToolKit()->LevelDungeon = LevelDungeon;
 		Toolkit->Init(Owner->GetToolkitHost());
 	}
 }
@@ -161,6 +162,10 @@ bool FDungeoneerEdMode::HandleClick(FEditorViewportClient* InViewportClient, HHi
 		{
 			LevelDungeon->CreateTile(
 				SegmentProxy->TilePoint + DUNGEON_DIRECTIONS[(int)SegmentProxy->Segment]);
+		}
+		else if (Click.IsShiftDown())
+		{
+			LevelDungeon->DeleteTile(SegmentProxy->TilePoint);
 		}
 		else
 		{

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Dungeon.h"
+#include "DungeoneerEdModeToolkit.h"
 #include "EdMode.h"
 
 
@@ -36,6 +37,11 @@ public:
 	bool UsesToolkits() const override;
 	// End of FEdMode interface
 
+	FDungeoneerEdModeToolkit* GetToolKit()
+	{
+		return (FDungeoneerEdModeToolkit*)Toolkit.Get();
+	};
+	
 	ADungeon* LevelDungeon = NULL;
 
 	TSet<FIntVector4> SelectedSegments; 

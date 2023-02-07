@@ -80,6 +80,17 @@ public:
 	}
 };
 
+USTRUCT()
+struct FDungeonPalette
+{
+	GENERATED_BODY()
+
+public:
+	
+	UPROPERTY(EditAnywhere)
+	TMap<FName, FDungeonSegmentTemplate> SegmentTemplates;
+};
+
 UCLASS(BlueprintType, NotBlueprintable)
 class ADungeon final : public AActor
 {
@@ -115,6 +126,9 @@ public:
 	UPROPERTY()
 	UMaterialInstanceDynamic* TileHoveredSelectedMaterial;
 
+	UPROPERTY(EditAnywhere)
+	FDungeonPalette DungeonPalette;
+
 	void CreateTile(FIntVector TilePoint);
 	void DeleteTile(FIntVector TilePoint);
 	void SetSegmentMaterial(FIntVector TilePoint, EDungeonDirection Segment, FName Template);
@@ -127,9 +141,6 @@ private:
 	
 	UPROPERTY()
 	TMap<FName, UInstancedStaticMeshComponent*> ISMCs;
-
-	UPROPERTY(EditAnywhere)
-	TMap<FName, FDungeonSegmentTemplate> SegmentTemplates;
 
 	UInstancedStaticMeshComponent* GetInstancedMeshComponent(FName TemplateName);
 };

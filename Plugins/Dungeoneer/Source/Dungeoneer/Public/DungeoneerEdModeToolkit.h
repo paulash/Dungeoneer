@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Toolkits/BaseToolkit.h"
 
+class ADungeon;
+
 class FDungeoneerEdModeToolkit : public FModeToolkit
 {
 public:
@@ -18,9 +20,17 @@ public:
 	virtual FName GetToolkitFName() const override;
 	virtual FText GetBaseToolkitName() const override;
 	virtual class FEdMode* GetEditorMode() const override;
-	virtual TSharedPtr<class SWidget> GetInlineContent() const override { return ToolkitWidget; }
+	virtual TSharedPtr<class SWidget> GetInlineContent() const override
+	{
+		return ToolkitWidget;
+	};
 
+	ADungeon* LevelDungeon = NULL;
+	
 private:
 
+	TSharedPtr<IStructureDetailsView> PaletteDetails;
+	
 	TSharedPtr<SWidget> ToolkitWidget;
+	TArray<TSharedPtr<FString>> TemplateNames;
 };
