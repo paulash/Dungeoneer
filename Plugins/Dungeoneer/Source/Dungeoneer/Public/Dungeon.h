@@ -48,7 +48,7 @@ const static TArray<FIntVector> DUNGEON_DIRECTIONS = {
 };
 
 USTRUCT()
-struct FDungeonSegmentTemplate
+struct FDungeonModel
 {
 	GENERATED_BODY()
 
@@ -58,7 +58,10 @@ public:
 	TArray<UMaterial*> Materials;
 
 	UPROPERTY(EditAnywhere)
-	UStaticMesh* Mesh;
+	UStaticMesh* Mesh = NULL;
+
+	UPROPERTY(EditAnywhere)
+	FTransform Offset = FTransform::Identity;
 };
 
 USTRUCT()
@@ -69,14 +72,17 @@ struct FDungeonTile
 public:
 
 	UPROPERTY(EditAnywhere)
-	TArray<FName> SegmentTemplates;
+	TArray<FName> SegmentModels;
+
+	UPROPERTY(EditAnywhere)
+	TArray<FName> CustomModels;
 
 	UPROPERTY(EditAnywhere)
 	FGameplayTagContainer Tags;
 
 	FDungeonTile()
 	{
-		SegmentTemplates.SetNum(DUNGEON_SEGMENT_COUNT);
+		SegmentModels.SetNum(DUNGEON_SEGMENT_COUNT);
 	}
 };
 
@@ -88,7 +94,7 @@ struct FDungeonPalette
 public:
 	
 	UPROPERTY(EditAnywhere)
-	TMap<FName, FDungeonSegmentTemplate> SegmentTemplates;
+	TMap<FName, FDungeonModel> Models;
 };
 
 UCLASS(BlueprintType, NotBlueprintable)

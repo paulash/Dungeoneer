@@ -14,20 +14,20 @@ ADungeon::ADungeon()
 
 	DungeonQuad = quad.Object;
 
-	FDungeonSegmentTemplate WallTemplate;
+	FDungeonModel WallTemplate;
 	WallTemplate.Mesh = DungeonQuad;
 	WallTemplate.Materials = { wall.Object };
-	DungeonPalette.SegmentTemplates.Emplace("DEFAULT_WALL", WallTemplate);
+	DungeonPalette.Models.Emplace("DEFAULT_WALL", WallTemplate);
 
-	FDungeonSegmentTemplate FloorTemplate;
+	FDungeonModel FloorTemplate;
 	FloorTemplate.Mesh = DungeonQuad;
 	FloorTemplate.Materials = { floor.Object };
-	DungeonPalette.SegmentTemplates.Emplace("DEFAULT_FLOOR", FloorTemplate);
+	DungeonPalette.Models.Emplace("DEFAULT_FLOOR", FloorTemplate);
 
-	FDungeonSegmentTemplate CeilingTemplate;
+	FDungeonModel CeilingTemplate;
 	CeilingTemplate.Mesh = DungeonQuad;
 	CeilingTemplate.Materials = { ceiling.Object };
-	DungeonPalette.SegmentTemplates.Emplace("DEFAULT_CEILING", CeilingTemplate);
+	DungeonPalette.Models.Emplace("DEFAULT_CEILING", CeilingTemplate);
 
 	SelectedTemplate = "DEFAULT_WALL";
 
@@ -59,12 +59,12 @@ void ADungeon::CreateTile(FIntVector TilePoint)
 	Modify();
 	
 	FDungeonTile NewTile = FDungeonTile();
-	NewTile.SegmentTemplates[(int)EDungeonDirection::NORTH] = "DEFAULT_WALL";
-	NewTile.SegmentTemplates[(int)EDungeonDirection::EAST] = "DEFAULT_WALL";
-	NewTile.SegmentTemplates[(int)EDungeonDirection::SOUTH] = "DEFAULT_WALL";
-	NewTile.SegmentTemplates[(int)EDungeonDirection::WEST] = "DEFAULT_WALL";
-	NewTile.SegmentTemplates[(int)EDungeonDirection::DOWN] = "DEFAULT_FLOOR";
-	NewTile.SegmentTemplates[(int)EDungeonDirection::UP] = "DEFAULT_CEILING";
+	NewTile.SegmentModels[(int)EDungeonDirection::NORTH] = "DEFAULT_WALL";
+	NewTile.SegmentModels[(int)EDungeonDirection::EAST] = "DEFAULT_WALL";
+	NewTile.SegmentModels[(int)EDungeonDirection::SOUTH] = "DEFAULT_WALL";
+	NewTile.SegmentModels[(int)EDungeonDirection::WEST] = "DEFAULT_WALL";
+	NewTile.SegmentModels[(int)EDungeonDirection::DOWN] = "DEFAULT_FLOOR";
+	NewTile.SegmentModels[(int)EDungeonDirection::UP] = "DEFAULT_CEILING";
 	
 	Tiles.Emplace(TilePoint, NewTile);
 
@@ -99,7 +99,7 @@ void ADungeon::SetSegmentTemplate(FIntVector TilePoint, EDungeonDirection Segmen
 	GEditor->BeginTransaction(LOCTEXT("PaintTileTransactionName", "Paint Tile"));
 #endif
 	Modify();
-	Tiles[TilePoint].SegmentTemplates[(int)Segment] = Template;
+	Tiles[TilePoint].SegmentModels[(int)Segment] = Template;
 #ifdef WITH_EDITOR
 	GEditor->EndTransaction();
 #endif
@@ -111,7 +111,9 @@ void ADungeon::RegenerateTiles()
 {
 	TArray<UActorComponent*> CurrentISMCs;
 	GetComponents(UInstancedStaticMeshComponent::StaticClass(), CurrentISMCs);
-	
+
+	// TODO: only destroy 'unused' ISMCs, build a list using the GetComponents result
+	// and only remove the ones that arent used at the end.
 	for (int i=0; i < CurrentISMCs.Num(); i++)
 	{
 		UInstancedStaticMeshComponent* ISMC = Cast<UInstancedStaticMeshComponent>(CurrentISMCs[i]);
@@ -129,14 +131,16 @@ void ADungeon::RegenerateTiles()
 	for (int i=0; i < TilePoints.Num(); i++)
 	{
 		FDungeonTile Tile = Tiles[TilePoints[i]];
+
+		// add all the segments to the batch.
 		for (int s=0; s < DUNGEON_SEGMENT_COUNT; s++)
 		{
 			// if there is an opening in the direction, dont render that segment.
 			if (Tiles.Contains(TilePoints[i] + DUNGEON_DIRECTIONS[s]))
 				continue;
 
-			if (!BatchedInstances.Contains(Tile.SegmentTemplates[s]))
-				BatchedInstances.Emplace(Tile.SegmentTemplates[s], TArray<FTransform>());
+			if (!BatchedInstances.Contains(Tile.SegmentModels[s]))
+				BatchedInstances.Emplace(Tile.SegmentModels[s], TArray<FTransform>());
 
 			FTransform Transform = FTransform(
 				DUNGEON_SEGMENT_ROTATIONS[s],
@@ -145,10 +149,29 @@ void ADungeon::RegenerateTiles()
 					TilePoints[i].Y * Scale,
 					TilePoints[i].Z * Scale + (Scale/2)),
 				FVector(Scale/100 + 0.001f, Scale/100 + 0.001f, Scale/100 + 0.001f));
-			BatchedInstances[Tile.SegmentTemplates[s]].Emplace(Transform);
+
+			FDungeonModel Model = DungeonPalette.Models.FindRef(Tile.SegmentModels[s]);
+			BatchedInstances[Tile.SegmentModels[s]].Emplace(Transform);
+		}
+
+		// add all the custom tiles to the batch.
+		for (int c=0; c < Tile.CustomModels.Num(); c++)
+		{
+			FTransform Transform = FTransform(
+				FVector(
+					TilePoints[i].X * Scale,
+					TilePoints[i].Y * Scale,
+					TilePoints[i].Z * Scale + (Scale/2)));
+
+			if (!BatchedInstances.Contains(Tile.CustomModels[c]))
+				BatchedInstances.Emplace(Tile.CustomModels[c], TArray<FTransform>());
+
+			FDungeonModel Model = DungeonPalette.Models.FindRef(Tile.CustomModels[c]);
+			BatchedInstances[Tile.CustomModels[c]].Emplace(Transform);
 		}
 	}
 
+	// take all the batches and add the instances!
 	TArray<FName> Templates;
 	BatchedInstances.GetKeys(Templates);
 	for (int i=0; i < Templates.Num(); i++)
@@ -162,8 +185,8 @@ void ADungeon::RegenerateTiles()
 
 UInstancedStaticMeshComponent* ADungeon::GetInstancedMeshComponent(FName TemplateName)
 {
-	if (!DungeonPalette.SegmentTemplates.Contains(TemplateName)) return NULL;
-	FDungeonSegmentTemplate Template = DungeonPalette.SegmentTemplates.FindRef(TemplateName);
+	if (!DungeonPalette.Models.Contains(TemplateName)) return NULL;
+	FDungeonModel Template = DungeonPalette.Models.FindRef(TemplateName);
 	UInstancedStaticMeshComponent* ISMC = ISMCs.FindRef(TemplateName);
 	if (!ISMC)
 	{

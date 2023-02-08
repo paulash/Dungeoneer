@@ -30,7 +30,7 @@ void FDungeoneerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 	PaletteDetails->GetOnFinishedChangingPropertiesDelegate().AddRaw(this, &FDungeoneerEdModeToolkit::OnFinishDetails);
 
 	TArray<FName> _TemplateNames;
-	LevelDungeon->DungeonPalette.SegmentTemplates.GetKeys(_TemplateNames);
+	LevelDungeon->DungeonPalette.Models.GetKeys(_TemplateNames);
 	for (int i=0; i < _TemplateNames.Num(); i++)
 	{
 		FString name = _TemplateNames[i].ToString();
@@ -78,7 +78,7 @@ void FDungeoneerEdModeToolkit::OnFinishDetails(const FPropertyChangedEvent& evt)
 {
 	TemplateNames.Empty();
 	TArray<FName> _TemplateNames;
-	LevelDungeon->DungeonPalette.SegmentTemplates.GetKeys(_TemplateNames);
+	LevelDungeon->DungeonPalette.Models.GetKeys(_TemplateNames);
 	for (int i=0; i < _TemplateNames.Num(); i++)
 	{
 		FString name = _TemplateNames[i].ToString();
