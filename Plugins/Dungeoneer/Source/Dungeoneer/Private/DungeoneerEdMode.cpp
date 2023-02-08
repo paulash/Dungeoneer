@@ -158,14 +158,19 @@ bool FDungeoneerEdMode::HandleClick(FEditorViewportClient* InViewportClient, HHi
 	if (HitProxy->IsA(HDungeonSegmentProxy::StaticGetType()))
 	{
 		HDungeonSegmentProxy* SegmentProxy = (HDungeonSegmentProxy*)HitProxy;
-		if (Click.IsControlDown())
+		if (Click.IsShiftDown() && Click.IsControlDown())
 		{
-			LevelDungeon->CreateTile(
-				SegmentProxy->TilePoint + DUNGEON_DIRECTIONS[(int)SegmentProxy->Segment]);
+			LevelDungeon->DeleteTile(SegmentProxy->TilePoint);
 		}
 		else if (Click.IsShiftDown())
 		{
-			LevelDungeon->DeleteTile(SegmentProxy->TilePoint);
+			// paint template.
+			LevelDungeon->SetSegmentTemplate(SegmentProxy->TilePoint, SegmentProxy->Segment, LevelDungeon->SelectedTemplate);
+		}
+		else if (Click.IsControlDown())
+		{
+			LevelDungeon->CreateTile(
+				SegmentProxy->TilePoint + DUNGEON_DIRECTIONS[(int)SegmentProxy->Segment]);
 		}
 		else
 		{

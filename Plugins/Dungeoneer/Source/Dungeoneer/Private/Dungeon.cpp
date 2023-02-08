@@ -22,12 +22,14 @@ ADungeon::ADungeon()
 	FDungeonSegmentTemplate FloorTemplate;
 	FloorTemplate.Mesh = DungeonQuad;
 	FloorTemplate.Materials = { floor.Object };
-	DungeonPalette.SegmentTemplates.Emplace("DEFAULT_FLOOR", WallTemplate);
+	DungeonPalette.SegmentTemplates.Emplace("DEFAULT_FLOOR", FloorTemplate);
 
 	FDungeonSegmentTemplate CeilingTemplate;
 	CeilingTemplate.Mesh = DungeonQuad;
 	CeilingTemplate.Materials = { ceiling.Object };
 	DungeonPalette.SegmentTemplates.Emplace("DEFAULT_CEILING", CeilingTemplate);
+
+	SelectedTemplate = "DEFAULT_WALL";
 
 	// Editor Materials, exclude in non-editor builds?
 	static ConstructorHelpers::FObjectFinder<UMaterial> selection(TEXT("/Dungeoneer/selection-border-material.selection-border-material"));
@@ -89,9 +91,9 @@ void ADungeon::DeleteTile(FIntVector TilePoint)
 	RegenerateTiles();
 }
 
-void ADungeon::SetSegmentMaterial(FIntVector TilePoint, EDungeonDirection Segment, FName Template)
+void ADungeon::SetSegmentTemplate(FIntVector TilePoint, EDungeonDirection Segment, FName Template)
 {
-	if (Tiles.Contains(TilePoint)) return;
+	if (!Tiles.Contains(TilePoint)) return;
 
 #ifdef WITH_EDITOR
 	GEditor->BeginTransaction(LOCTEXT("PaintTileTransactionName", "Paint Tile"));

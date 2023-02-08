@@ -129,9 +129,12 @@ public:
 	UPROPERTY(EditAnywhere)
 	FDungeonPalette DungeonPalette;
 
+	UPROPERTY(EditAnywhere)
+	FName SelectedTemplate;
+
 	void CreateTile(FIntVector TilePoint);
 	void DeleteTile(FIntVector TilePoint);
-	void SetSegmentMaterial(FIntVector TilePoint, EDungeonDirection Segment, FName Template);
+	void SetSegmentTemplate(FIntVector TilePoint, EDungeonDirection Segment, FName Template);
 	void RegenerateTiles();
 
 private:

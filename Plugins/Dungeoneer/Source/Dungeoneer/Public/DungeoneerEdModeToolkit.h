@@ -29,8 +29,12 @@ public:
 	
 private:
 
+	void OnFinishDetails(const FPropertyChangedEvent& evt);
+	void OnSelectTemplate(TSharedPtr<FString> Template, ESelectInfo::Type);
+
 	TSharedPtr<IStructureDetailsView> PaletteDetails;
-	
+
+	TSharedPtr<STextComboBox> TemplateComboBox;
 	TSharedPtr<SWidget> ToolkitWidget;
 	TArray<TSharedPtr<FString>> TemplateNames;
 };

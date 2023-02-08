@@ -27,14 +27,23 @@ void FDungeoneerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 		MakeShareable(ScopeDungeonPalette),
 		FText::FromString("Dungeon Palette")
 	);
+	PaletteDetails->GetOnFinishedChangingPropertiesDelegate().AddRaw(this, &FDungeoneerEdModeToolkit::OnFinishDetails);
 
-	//TemplateNames.Add(MakeShareable(new FString("Test1")));
-	//TemplateNames.Add(MakeShareable(new FString("Test2")));
-
-	for (int i=0; i < LevelDungeon->DungeonPalette.SegmentTemplates.Num(); i++)
+	TArray<FName> _TemplateNames;
+	LevelDungeon->DungeonPalette.SegmentTemplates.GetKeys(_TemplateNames);
+	for (int i=0; i < _TemplateNames.Num(); i++)
 	{
-		//TemplateNames.Add(MakeShareable(new FString(LevelDungeon->DungeonPalette.SegmentTemplates[i])));
+		FString name = _TemplateNames[i].ToString();
+		FString* sName = new FString(name);
+		TemplateNames.Add(MakeShareable(sName));
 	}
+	if (TemplateNames.Num() == 0)
+		TemplateNames.Add(MakeShareable(new FString("NO TEMPLATES!")));
+
+	TemplateComboBox = SNew(STextComboBox)
+						.OptionsSource(&TemplateNames)
+						.InitiallySelectedItem(TemplateNames[0])
+						.OnSelectionChanged(this, &FDungeoneerEdModeToolkit::OnSelectTemplate);
 	
 	SAssignNew(ToolkitWidget, SBorder)
 		[
@@ -42,9 +51,7 @@ void FDungeoneerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 			+ SVerticalBox::Slot()
 			.AutoHeight()
 			[
-				SNew(STextComboBox)
-				.OptionsSource(&TemplateNames)
-				.InitiallySelectedItem(TemplateNames[0])
+				TemplateComboBox.ToSharedRef()
 			]
 			+ SVerticalBox::Slot()
 			.AutoHeight()
@@ -65,6 +72,30 @@ FName FDungeoneerEdModeToolkit::GetToolkitFName() const
 FText FDungeoneerEdModeToolkit::GetBaseToolkitName() const
 {
 	return NSLOCTEXT("DungeoneerEdModeToolkit", "DisplayName", "DungeoneerEdMode Tool");
+}
+
+void FDungeoneerEdModeToolkit::OnFinishDetails(const FPropertyChangedEvent& evt)
+{
+	TemplateNames.Empty();
+	TArray<FName> _TemplateNames;
+	LevelDungeon->DungeonPalette.SegmentTemplates.GetKeys(_TemplateNames);
+	for (int i=0; i < _TemplateNames.Num(); i++)
+	{
+		FString name = _TemplateNames[i].ToString();
+		FString* sName = new FString(name);
+		TemplateNames.Add(MakeShareable(sName));	
+	}
+	if (TemplateNames.Num() == 0)
+		TemplateNames.Add(MakeShareable(new FString("NO TEMPLATES!")));
+
+	TemplateComboBox->SetSelectedItem(TemplateNames[0]);
+	
+	LevelDungeon->RegenerateTiles();
+}
+
+void FDungeoneerEdModeToolkit::OnSelectTemplate(TSharedPtr<FString> Template, ESelectInfo::Type)
+{
+	LevelDungeon->SelectedTemplate = FName(*Template);
 }
 
 class FEdMode* FDungeoneerEdModeToolkit::GetEditorMode() const
