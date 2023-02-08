@@ -112,7 +112,7 @@ public:
 	TMap<FIntVector, FDungeonTile> Tiles;
 
 	UPROPERTY(EditAnywhere)
-	float Scale = 100.0f;
+	float Scale = 200.0f;
 
 	UPROPERTY()
 	UMaterial* SelectionMaterial;
@@ -150,6 +150,9 @@ private:
 	
 	UPROPERTY()
 	TMap<FName, UInstancedStaticMeshComponent*> ISMCs;
+
+	UPROPERTY()
+	TMap<UInstancedStaticMeshComponent*, FName> ISMCValues;
 
 	UInstancedStaticMeshComponent* GetInstancedMeshComponent(FName TemplateName);
 };

@@ -111,18 +111,14 @@ void ADungeon::RegenerateTiles()
 {
 	TArray<UActorComponent*> CurrentISMCs;
 	GetComponents(UInstancedStaticMeshComponent::StaticClass(), CurrentISMCs);
-
-	// TODO: only destroy 'unused' ISMCs, build a list using the GetComponents result
-	// and only remove the ones that arent used at the end.
+	
+	TSet<UInstancedStaticMeshComponent*> UnusedISMCs;
 	for (int i=0; i < CurrentISMCs.Num(); i++)
 	{
 		UInstancedStaticMeshComponent* ISMC = Cast<UInstancedStaticMeshComponent>(CurrentISMCs[i]);
 		if (!ISMC) continue;
-
-		ISMC->UnregisterComponent();
-		ISMC->DestroyComponent();
+		UnusedISMCs.Add(ISMC);
 	}
-	ISMCs.Empty();
 	
 	TMap<FName, TArray<FTransform>> BatchedInstances;
 	
@@ -179,7 +175,23 @@ void ADungeon::RegenerateTiles()
 		TArray<FTransform> Transforms = BatchedInstances[Templates[i]];
 		UInstancedStaticMeshComponent* ISMC = GetInstancedMeshComponent(Templates[i]);
 		if (!ISMC) continue;
+		ISMC->ClearInstances();
 		ISMC->AddInstances(Transforms, false);
+
+		// was used, so now its not unused.
+		UnusedISMCs.Remove(ISMC);
+	}
+
+	// find the removed ISMCs and remove the component and dereference them in the maps.
+	TArray<UInstancedStaticMeshComponent*> RemovedISMCs = UnusedISMCs.Array();
+	for (int i=0; i < RemovedISMCs.Num(); i++)
+	{
+		FName ModelName = ISMCValues.FindRef(RemovedISMCs[i]);
+		ISMCValues.Remove(RemovedISMCs[i]);
+		ISMCs.Remove(ModelName);
+
+		RemovedISMCs[i]->UnregisterComponent();
+		RemovedISMCs[i]->DestroyComponent();
 	}
 }
 
@@ -201,6 +213,7 @@ UInstancedStaticMeshComponent* ADungeon::GetInstancedMeshComponent(FName Templat
 			ISMC->SetMaterial(i, Template.Materials[i]);
 		
 		ISMCs.Emplace(TemplateName, ISMC);
+		ISMCValues.Emplace(ISMC, TemplateName);
 	}
 	return ISMC;
 }
