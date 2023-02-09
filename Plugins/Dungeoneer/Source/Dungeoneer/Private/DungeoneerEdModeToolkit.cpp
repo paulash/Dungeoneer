@@ -2,12 +2,8 @@
 
 #include "DungeoneerEdModeToolkit.h"
 #include "DungeoneerEdMode.h"
-#include "Engine/Selection.h"
-#include "Widgets/Input/SButton.h"
-#include "Widgets/Text/STextBlock.h"
 #include "EditorModeManager.h"
 #include "Widgets/Input/STextComboBox.h"
-#include "Dungeon.h"
 #include "IStructureDetailsView.h"
 
 #define LOCTEXT_NAMESPACE "FDungeoneerEdModeToolkit"
@@ -20,14 +16,14 @@ void FDungeoneerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 {
 	FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	
-	FStructOnScope* ScopeDungeonPalette = new FStructOnScope(FDungeonPalette::StaticStruct(), (uint8*)&LevelDungeon->DungeonPalette);
-	PaletteDetails = PropertyEditorModule.CreateStructureDetailView(
+	FStructOnScope* ScopeDungeonPalette = new FStructOnScope(FDungeonModel::StaticStruct(), NULL);//(uint8*)&LevelDungeon->DungeonPalette);
+	ModelDetails = PropertyEditorModule.CreateStructureDetailView(
 		FDetailsViewArgs(),
 		FStructureDetailsViewArgs(),
 		MakeShareable(ScopeDungeonPalette),
-		FText::FromString("Dungeon Palette")
+		FText::FromString("Dungeon Model")
 	);
-	PaletteDetails->GetOnFinishedChangingPropertiesDelegate().AddRaw(this, &FDungeoneerEdModeToolkit::OnFinishDetails);
+	ModelDetails->GetOnFinishedChangingPropertiesDelegate().AddRaw(this, &FDungeoneerEdModeToolkit::OnFinishDetails);
 
 	TArray<FName> _TemplateNames;
 	LevelDungeon->DungeonPalette.Models.GetKeys(_TemplateNames);
@@ -40,25 +36,37 @@ void FDungeoneerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 	if (TemplateNames.Num() == 0)
 		TemplateNames.Add(MakeShareable(new FString("NO TEMPLATES!")));
 
-	TemplateComboBox = SNew(STextComboBox)
-						.OptionsSource(&TemplateNames)
-						.InitiallySelectedItem(TemplateNames[0])
-						.OnSelectionChanged(this, &FDungeoneerEdModeToolkit::OnSelectTemplate);
+	TemplateList = SNew(SListView<TSharedPtr<FString>>).ListItemsSource(&TemplateNames)
+					.OnGenerateRow(this, &FDungeoneerEdModeToolkit::OnGenerateRowForList)
+					.OnSelectionChanged(this, &FDungeoneerEdModeToolkit::OnSelectModel);
+	TemplateList->SetSelection(TemplateNames[0]);
+
+	TSharedPtr<SButton> AddModel = SNew(SButton).Text(FText::FromString("Add Model"));
+	TSharedPtr<SButton> DeleteModel = SNew(SButton).Text(FText::FromString("Delete Model"));
 	
 	SAssignNew(ToolkitWidget, SBorder)
 		[
 			SNew(SVerticalBox)
 			+ SVerticalBox::Slot()
-			.AutoHeight()
+			.VAlign(VAlign_Fill)
 			[
-				TemplateComboBox.ToSharedRef()
+				TemplateList.ToSharedRef()
 			]
 			+ SVerticalBox::Slot()
-			.AutoHeight()
+			.VAlign(VAlign_Bottom)
 			[
-				PaletteDetails->GetWidget().ToSharedRef()
+				AddModel.ToSharedRef()
 			]
-	
+			+ SVerticalBox::Slot()
+			.VAlign(VAlign_Fill)
+			[
+				ModelDetails->GetWidget().ToSharedRef()
+			]
+			+ SVerticalBox::Slot()
+			.VAlign(VAlign_Bottom)
+			[
+				DeleteModel.ToSharedRef()
+			]
 		];
 		
 	FModeToolkit::Init(InitToolkitHost);
@@ -74,6 +82,20 @@ FText FDungeoneerEdModeToolkit::GetBaseToolkitName() const
 	return NSLOCTEXT("DungeoneerEdModeToolkit", "DisplayName", "DungeoneerEdMode Tool");
 }
 
+void FDungeoneerEdModeToolkit::OnSelectModel(TSharedPtr<FString> Item, ESelectInfo::Type)
+{
+	if (!Item)
+	{
+		TemplateList->SetSelection(TemplateNames[0]);
+		return;
+	}
+	LevelDungeon->SelectedTemplate = FName(*Item);
+
+	FStructOnScope* ScopeDungeonPalette = new FStructOnScope(FDungeonModel::StaticStruct(),
+		(uint8*)&LevelDungeon->DungeonPalette.Models[LevelDungeon->SelectedTemplate]);
+	ModelDetails->SetStructureData(MakeShareable(ScopeDungeonPalette));
+}
+
 void FDungeoneerEdModeToolkit::OnFinishDetails(const FPropertyChangedEvent& evt)
 {
 	TemplateNames.Empty();
@@ -87,15 +109,9 @@ void FDungeoneerEdModeToolkit::OnFinishDetails(const FPropertyChangedEvent& evt)
 	}
 	if (TemplateNames.Num() == 0)
 		TemplateNames.Add(MakeShareable(new FString("NO TEMPLATES!")));
-
-	TemplateComboBox->SetSelectedItem(TemplateNames[0]);
 	
+	TemplateList->SetSelection(TemplateNames[0]);
 	LevelDungeon->RegenerateTiles();
-}
-
-void FDungeoneerEdModeToolkit::OnSelectTemplate(TSharedPtr<FString> Template, ESelectInfo::Type)
-{
-	LevelDungeon->SelectedTemplate = FName(*Template);
 }
 
 class FEdMode* FDungeoneerEdModeToolkit::GetEditorMode() const

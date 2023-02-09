@@ -154,16 +154,18 @@ void ADungeon::RegenerateTiles()
 		for (int c=0; c < Tile.CustomModels.Num(); c++)
 		{
 			FTransform Transform = FTransform(
+				Tile.CustomModels[c].Offset.GetRotation(),
 				FVector(
 					TilePoints[i].X * Scale,
 					TilePoints[i].Y * Scale,
-					TilePoints[i].Z * Scale + (Scale/2)));
+					TilePoints[i].Z * Scale + (Scale/2)) + Tile.CustomModels[c].Offset.GetLocation(),
+					Tile.CustomModels[c].Offset.GetScale3D());
 
-			if (!BatchedInstances.Contains(Tile.CustomModels[c]))
-				BatchedInstances.Emplace(Tile.CustomModels[c], TArray<FTransform>());
+			if (!BatchedInstances.Contains(Tile.CustomModels[c].TemplateName))
+				BatchedInstances.Emplace(Tile.CustomModels[c].TemplateName, TArray<FTransform>());
 
-			FDungeonModel Model = DungeonPalette.Models.FindRef(Tile.CustomModels[c]);
-			BatchedInstances[Tile.CustomModels[c]].Emplace(Transform);
+			FDungeonModel Model = DungeonPalette.Models.FindRef(Tile.CustomModels[c].TemplateName);
+			BatchedInstances[Tile.CustomModels[c].TemplateName].Emplace(Transform);
 		}
 	}
 

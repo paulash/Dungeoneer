@@ -4,8 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Toolkits/BaseToolkit.h"
+#include "Widgets/Views/SListView.h"
+#include "Dungeon.h"
 
-class ADungeon;
 
 class FDungeoneerEdModeToolkit : public FModeToolkit
 {
@@ -29,12 +30,22 @@ public:
 	
 private:
 
+	TSharedRef<ITableRow> OnGenerateRowForList(TSharedPtr<FString> Item, const TSharedRef<STableViewBase>& OwnerTable)
+	{
+		return
+			SNew(STableRow<TSharedPtr<FString>>, OwnerTable)
+			[
+				SNew(STextBlock).Text(FText::FromString(*Item))
+			];
+	}
+
+	void OnSelectModel(TSharedPtr<FString> Item, ESelectInfo::Type);
 	void OnFinishDetails(const FPropertyChangedEvent& evt);
-	void OnSelectTemplate(TSharedPtr<FString> Template, ESelectInfo::Type);
 
-	TSharedPtr<IStructureDetailsView> PaletteDetails;
+	TSharedPtr<IStructureDetailsView> ModelDetails;
 
-	TSharedPtr<STextComboBox> TemplateComboBox;
+	TSharedPtr<SListView<TSharedPtr<FString>>> TemplateList;
+	
 	TSharedPtr<SWidget> ToolkitWidget;
 	TArray<TSharedPtr<FString>> TemplateNames;
 };

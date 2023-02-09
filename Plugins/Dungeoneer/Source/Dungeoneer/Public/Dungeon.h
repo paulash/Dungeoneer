@@ -59,9 +59,20 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	UStaticMesh* Mesh = NULL;
+};
+
+USTRUCT()
+struct FDungeonCustomModel
+{
+	GENERATED_BODY()
+
+public:
 
 	UPROPERTY(EditAnywhere)
-	FTransform Offset = FTransform::Identity;
+	FName TemplateName;
+
+	UPROPERTY(EditAnywhere)
+	FTransform Offset;
 };
 
 USTRUCT()
@@ -75,7 +86,7 @@ public:
 	TArray<FName> SegmentModels;
 
 	UPROPERTY(EditAnywhere)
-	TArray<FName> CustomModels;
+	TArray<FDungeonCustomModel> CustomModels;
 
 	UPROPERTY(EditAnywhere)
 	FGameplayTagContainer Tags;
