@@ -1,0 +1,15 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.Dungeoneer.cpp.obj": [
+			"Dungeon.cpp.obj",
+			"Dungeoneer.cpp.obj",
+			"DungeoneerEdMode.cpp.obj",
+			"DungeoneerEdModeToolkit.cpp.obj"
+		],
+		"Module.Dungeoneer.gen.cpp.obj": [
+			"Dungeon.gen.cpp.obj",
+			"Dungeoneer.init.gen.cpp.obj"
+		]
+	}
+}

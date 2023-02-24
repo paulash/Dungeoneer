@@ -1,0 +1,16 @@
+/NOLOGO
+/errorReport:prompt
+/MACHINE:x64
+/SUBSYSTEM:WINDOWS
+/DEF
+/NAME:"UE4Editor-Dungeoneer-Win64-DebugGame.dll"
+/IGNORE:4221
+/NODEFAULTLIB
+"Q:\SOURCE\Dungeoneer\Intermediate\Build\Win64\DungeoneerDemoEditor\DebugGame\UnrealEd\SharedPCH.UnrealEd.NonOptimized.ShadowErrors.h.obj"
+"Q:\SOURCE\Dungeoneer\Plugins\Dungeoneer\Intermediate\Build\Win64\UE4Editor\DebugGame\Dungeoneer\Dungeoneer.cpp.obj"
+"Q:\SOURCE\Dungeoneer\Plugins\Dungeoneer\Intermediate\Build\Win64\UE4Editor\DebugGame\Dungeoneer\DungeoneerEdMode.cpp.obj"
+"Q:\SOURCE\Dungeoneer\Plugins\Dungeoneer\Intermediate\Build\Win64\UE4Editor\DebugGame\Dungeoneer\DungeoneerEdModeToolkit.cpp.obj"
+"Q:\SOURCE\Dungeoneer\Plugins\Dungeoneer\Intermediate\Build\Win64\UE4Editor\DebugGame\Dungeoneer\Module.Dungeoneer.cpp.obj"
+"Q:\SOURCE\Dungeoneer\Plugins\Dungeoneer\Intermediate\Build\Win64\UE4Editor\DebugGame\Dungeoneer\Module.Dungeoneer.gen.cpp.obj"
+"Q:\SOURCE\Dungeoneer\Plugins\Dungeoneer\Intermediate\Build\Win64\UE4Editor\DebugGame\Dungeoneer\Default.rc2.res"
+/OUT:"Q:\SOURCE\Dungeoneer\Plugins\Dungeoneer\Intermediate\Build\Win64\UE4Editor\DebugGame\Dungeoneer\UE4Editor-Dungeoneer-Win64-DebugGame.lib"
