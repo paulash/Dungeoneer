@@ -3,10 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/InstancedStaticMeshComponent.h"
-#include "Components/ChildActorComponent.h"
 #include "GameplayTagContainer.h"
-#include "Materials/MaterialInstanceDynamic.h"
-#include "Containers/StaticArray.h"
 #include "Dungeon.generated.h"
 
 UENUM(BlueprintType)
@@ -149,9 +146,44 @@ public:
 	UPROPERTY(EditAnywhere)
 	FName SelectedTemplate;
 
+	UFUNCTION(BlueprintCallable)
 	void CreateTile(FIntVector TilePoint);
+	
+	UFUNCTION(BlueprintCallable)
 	void DeleteTile(FIntVector TilePoint);
+
+	UFUNCTION(BlueprintCallable)
 	void SetSegmentTemplate(FIntVector TilePoint, EDungeonDirection Segment, FName Template);
+
+	UFUNCTION(BlueprintCallable)
+	void AddTileGameplayTag(FIntVector TilePoint, FGameplayTag tag);
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveTileGameplayTag(FIntVector TilePoint, FGameplayTag tag);
+
+	UFUNCTION(BlueprintCallable)
+	FGameplayTagContainer GetTileGameplayTags(FIntVector TilePoint);
+
+	UFUNCTION(BlueprintPure)
+	FIntVector GetWorldLocationToTilePoint(FVector WorldLocation)
+	{
+		return FIntVector(
+			WorldLocation.X / Scale,
+			WorldLocation.Y / Scale,
+			WorldLocation.Z / Scale
+		);	
+	};
+
+	UFUNCTION(BlueprintPure)
+	FVector GetTilePointToWorldLocation(FIntVector TilePoint)
+	{
+		return FVector(
+			(TilePoint.X * Scale),
+			(TilePoint.Y * Scale),
+			(TilePoint.Z * Scale) 
+		);
+	}
+	
 	void RegenerateTiles();
 
 private:

@@ -7,10 +7,10 @@ ADungeon::ADungeon()
 {
 	RootComponent = CreateDefaultSubobject<USceneComponent>("Root");
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> quad(TEXT("/Dungeoneer/dungeon-quad.dungeon-quad"));
-	static ConstructorHelpers::FObjectFinder<UMaterial> floor(TEXT("/Dungeoneer/basic-floor-material.basic-floor-material"));
-	static ConstructorHelpers::FObjectFinder<UMaterial> wall(TEXT("/Dungeoneer/basic-wall-material.basic-wall-material"));
-	static ConstructorHelpers::FObjectFinder<UMaterial> ceiling(TEXT("/Dungeoneer/basic-ceiling-material.basic-ceiling-material"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> quad(TEXT("/DungeoneerGame/dungeon-quad.dungeon-quad"));
+	static ConstructorHelpers::FObjectFinder<UMaterial> floor(TEXT("/DungeoneerGame/basic-floor-material.basic-floor-material"));
+	static ConstructorHelpers::FObjectFinder<UMaterial> wall(TEXT("/DungeoneerGame/basic-wall-material.basic-wall-material"));
+	static ConstructorHelpers::FObjectFinder<UMaterial> ceiling(TEXT("/DungeoneerGame/basic-ceiling-material.basic-ceiling-material"));
 
 	DungeonQuad = quad.Object;
 
@@ -32,10 +32,10 @@ ADungeon::ADungeon()
 	SelectedTemplate = "DEFAULT_WALL";
 
 	// Editor Materials, exclude in non-editor builds?
-	static ConstructorHelpers::FObjectFinder<UMaterial> selection(TEXT("/Dungeoneer/selection-border-material.selection-border-material"));
+	static ConstructorHelpers::FObjectFinder<UMaterial> selection(TEXT("/DungeoneerGame/selection-border-material.selection-border-material"));
 	SelectionMaterial = selection.Object;
 
-	static ConstructorHelpers::FObjectFinder<UMaterial> plusIcon(TEXT("/Dungeoneer/plus-icon-material.plus-icon-material"));
+	static ConstructorHelpers::FObjectFinder<UMaterial> plusIcon(TEXT("/DungeoneerGame/plus-icon-material.plus-icon-material"));
 	PlusIconMaterial = plusIcon.Object;
 }
 
@@ -105,6 +105,24 @@ void ADungeon::SetSegmentTemplate(FIntVector TilePoint, EDungeonDirection Segmen
 #endif
 	
 	RegenerateTiles();
+}
+
+void ADungeon::AddTileGameplayTag(FIntVector TilePoint, FGameplayTag tag)
+{
+	if (!Tiles.Contains(TilePoint)) return;
+	Tiles[TilePoint].Tags.AddTag(tag);
+}
+
+void ADungeon::RemoveTileGameplayTag(FIntVector TilePoint, FGameplayTag tag)
+{
+	if (!Tiles.Contains(TilePoint)) return;
+	Tiles[TilePoint].Tags.RemoveTag(tag);
+}
+
+FGameplayTagContainer ADungeon::GetTileGameplayTags(FIntVector TilePoint)
+{
+	if (!Tiles.Contains(TilePoint)) return FGameplayTagContainer();
+	return Tiles[TilePoint].Tags;
 }
 
 void ADungeon::RegenerateTiles()
