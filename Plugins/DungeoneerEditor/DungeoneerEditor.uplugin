@@ -24,12 +24,7 @@
 	"Plugins": [
 		{
 			"Name": "DungeoneerGame",
-			"Enabled": true,
-			"SupportedTargetPlatforms": [
-				"Win32",
-				"Win64",
-				"Linux"
-			]
+			"Enabled": true
 		}
 	]
 }

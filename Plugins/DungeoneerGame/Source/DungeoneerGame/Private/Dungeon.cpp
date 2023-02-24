@@ -1,7 +1,7 @@
 #include "Dungeon.h"
 #include "UObject/ConstructorHelpers.h"
 
-#define LOCTEXT_NAMESPACE "FDungeoneerEdModeToolkit"
+//#define LOCTEXT_NAMESPACE "FDungeoneerEdModeToolkit"
 
 ADungeon::ADungeon()
 {
@@ -28,8 +28,6 @@ ADungeon::ADungeon()
 	CeilingTemplate.Mesh = DungeonQuad;
 	CeilingTemplate.Materials = { ceiling.Object };
 	DungeonPalette.Models.Emplace("DEFAULT_CEILING", CeilingTemplate);
-
-	SelectedTemplate = "DEFAULT_WALL";
 
 	// Editor Materials, exclude in non-editor builds?
 	static ConstructorHelpers::FObjectFinder<UMaterial> selection(TEXT("/DungeoneerGame/selection-border-material.selection-border-material"));
@@ -185,6 +183,7 @@ void ADungeon::RegenerateTiles()
 			FDungeonModel Model = DungeonPalette.Models.FindRef(Tile.CustomModels[c].TemplateName);
 			BatchedInstances[Tile.CustomModels[c].TemplateName].Emplace(Transform);
 		}
+		OnRefreshTile.Broadcast(this, TilePoints[i]);
 	}
 
 	// take all the batches and add the instances!

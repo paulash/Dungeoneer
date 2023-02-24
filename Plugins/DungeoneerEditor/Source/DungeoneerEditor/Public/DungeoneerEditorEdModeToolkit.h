@@ -1,9 +1,8 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Toolkits/BaseToolkit.h"
+#include "DungeoneerEditorWidget.h"
 
 class FDungeoneerEditorEdModeToolkit : public FModeToolkit
 {
@@ -22,5 +21,5 @@ public:
 
 private:
 
-	TSharedPtr<SWidget> ToolkitWidget;
+	TSharedPtr<SDungeoneerEditorWidget> ToolkitWidget;
 };

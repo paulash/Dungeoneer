@@ -105,12 +105,19 @@ public:
 	TMap<FName, FDungeonModel> Models;
 };
 
+
+class ADungeon;
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnRefreshTile, ADungeon*, Dungeon, FIntVector, TilePoint);
+
 UCLASS(BlueprintType, NotBlueprintable)
-class ADungeon final : public AActor
+class DUNGEONEERGAME_API ADungeon final : public AActor
 {
 	GENERATED_BODY()
 
 public:
+
+	UPROPERTY(BlueprintAssignable)
+	FOnRefreshTile OnRefreshTile;
 
 	ADungeon();
 
@@ -142,9 +149,6 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	FDungeonPalette DungeonPalette;
-
-	UPROPERTY(EditAnywhere)
-	FName SelectedTemplate;
 
 	UFUNCTION(BlueprintCallable)
 	void CreateTile(FIntVector TilePoint);

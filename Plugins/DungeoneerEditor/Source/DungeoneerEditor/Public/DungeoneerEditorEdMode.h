@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "EdMode.h"
+#include "Dungeon.h"
 
 class FDungeoneerEditorEdMode : public FEdMode
 {
@@ -21,4 +22,7 @@ public:
 	//virtual void ActorSelectionChangeNotify() override;
 	bool UsesToolkits() const override;
 	// End of FEdMode interface
+
+	ADungeon* LevelDungeon = NULL;
+	FName SelectedTemplate = NAME_None;
 };
