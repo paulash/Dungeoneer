@@ -5,12 +5,16 @@
 #include "EditorModeManager.h"
 #include "EngineUtils.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "DungeoneerSelectTool.h"
 
 IMPLEMENT_HIT_PROXY(HDungeonSegmentProxy, HHitProxy);
 const FEditorModeID FDungeoneerEditorEdMode::EM_DungeoneerEditorEdModeId = TEXT("EM_DungeoneerEditorEdMode");
 
 FDungeoneerEditorEdMode::FDungeoneerEditorEdMode()
 {
+	Tools.Empty();
+	InitializeTool_Select();
+	CurrentTool = Tools[0].Get();
 }
 
 FDungeoneerEditorEdMode::~FDungeoneerEditorEdMode()
@@ -75,6 +79,12 @@ void FDungeoneerEditorEdMode::Exit()
 	FEdMode::Exit();
 }
 
+void FDungeoneerEditorEdMode::Tick(FEditorViewportClient* ViewportClient, float DeltaTime)
+{
+	ViewportClient->Viewport->CaptureMouse(usingTool);
+	FEdMode::Tick(ViewportClient, DeltaTime);
+}
+
 bool FDungeoneerEditorEdMode::MouseMove(FEditorViewportClient* ViewportClient, FViewport* Viewport, int32 x, int32 y)
 {
 	HHitProxy* HitProxy = Viewport->GetHitProxy(x, y);
@@ -89,6 +99,9 @@ bool FDungeoneerEditorEdMode::MouseMove(FEditorViewportClient* ViewportClient, F
 void FDungeoneerEditorEdMode::Render(const FSceneView* View, FViewport* Viewport, FPrimitiveDrawInterface* PDI)
 {
 	FEdMode::Render(View, Viewport, PDI);
+	//MousePosition.X = FMath::Clamp(Viewport->GetMouseX(), 0, Viewport->GetSizeXY().X-1);
+	//MousePosition.Y = FMath::Clamp(Viewport->GetMouseY(), 0, Viewport->GetSizeXY().Y-1);
+	
 	if (!LevelDungeon) return;
 	
 	TArray<FIntVector> TilePoints;
@@ -154,7 +167,7 @@ void FDungeoneerEditorEdMode::DrawHUD(FEditorViewportClient* ViewportClient, FVi
 	const FSceneView* View, FCanvas* Canvas)
 {
 	Canvas->DrawShadowedText(10, 100, FText::FromString("Test Text"), GEditor->EditorFont, FLinearColor::Red);
-	FEdMode::DrawHUD(ViewportClient, Viewport, View, Canvas);
+	CurrentTool->DrawHUD(ViewportClient, Viewport, View, Canvas);
 }
 
 bool FDungeoneerEditorEdMode::HandleClick(FEditorViewportClient* InViewportClient, HHitProxy* HitProxy,
@@ -208,6 +221,45 @@ bool FDungeoneerEditorEdMode::HandleClick(FEditorViewportClient* InViewportClien
 bool FDungeoneerEditorEdMode::IsSelectionAllowed(AActor* InActor, bool bInSelection) const
 {
 	return false;
+}
+
+bool FDungeoneerEditorEdMode::InputKey(FEditorViewportClient* ViewportClient, FViewport* Viewport, FKey Key,
+	EInputEvent Event)
+{
+	usingTool = IsCtrlDown(Viewport) || IsShiftDown(Viewport);
+	//Viewport->CaptureMouse(usingTool);
+
+	
+	
+	if (usingTool && Event == IE_Released && Key == EKeys::LeftMouseButton)
+	{
+		Viewport->SetPreCaptureMousePosFromSlateCursor();
+	}
+	
+	return FEdMode::InputKey(ViewportClient, Viewport, Key, Event);
+}
+
+bool FDungeoneerEditorEdMode::InputDelta(FEditorViewportClient* InViewportClient, FViewport* InViewport,
+	FVector& InDrag, FRotator& InRot, FVector& InScale)
+{
+	if (usingTool) return true;
+	return FEdMode::InputDelta(InViewportClient, InViewport, InDrag, InRot, InScale);
+}
+
+bool FDungeoneerEditorEdMode::StartTracking(FEditorViewportClient* InViewportClient, FViewport* InViewport)
+{
+	return FEdMode::StartTracking(InViewportClient, InViewport);
+}
+
+bool FDungeoneerEditorEdMode::EndTracking(FEditorViewportClient* InViewportClient, FViewport* InViewport)
+{
+	return FEdMode::EndTracking(InViewportClient, InViewport);
+}
+
+void FDungeoneerEditorEdMode::InitializeTool_Select()
+{
+	auto Tool_Select = MakeUnique<FDungeoneerSelectTool>(this);
+	Tools.Emplace(MoveTemp(Tool_Select));
 }
 
 

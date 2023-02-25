@@ -1,8 +1,8 @@
 #include "DungeoneerEditorEdModeToolkit.h"
+
+#include "DungeoneerCommands.h"
 #include "DungeoneerEditorEdMode.h"
-#include "Engine/Selection.h"
-#include "Widgets/Input/SButton.h"
-#include "Widgets/Text/STextBlock.h"
+#include "Classes/EditorStyleSettings.h"
 #include "EditorModeManager.h"
 
 #define LOCTEXT_NAMESPACE "FDungeoneerEditorEdModeToolkit"
@@ -25,6 +25,25 @@ FName FDungeoneerEditorEdModeToolkit::GetToolkitFName() const
 FText FDungeoneerEditorEdModeToolkit::GetBaseToolkitName() const
 {
 	return NSLOCTEXT("DungeoneerEditorEdModeToolkit", "DisplayName", "DungeoneerEditorEdMode Tool");
+}
+
+void FDungeoneerEditorEdModeToolkit::BuildToolPalette(FName Palette, FToolBarBuilder& ToolbarBuilder)
+{
+	auto Commands = FDungeoneerEditorCommands::Get();
+	
+	ToolbarBuilder.BeginSection("Manage");
+	ToolbarBuilder.AddToolBarButton(Commands.SelectTool);
+	ToolbarBuilder.AddSeparator();
+	
+	FModeToolkit::BuildToolPalette(Palette, ToolbarBuilder);
+}
+
+void FDungeoneerEditorEdModeToolkit::GetToolPaletteNames(TArray<FName>& PaletteNames) const
+{
+	if (!GetDefault<UEditorStyleSettings>()->bEnableLegacyEditorModeUI)
+	{
+		PaletteNames = { FName("Managed") };
+	}
 }
 
 class FEdMode* FDungeoneerEditorEdModeToolkit::GetEditorMode() const

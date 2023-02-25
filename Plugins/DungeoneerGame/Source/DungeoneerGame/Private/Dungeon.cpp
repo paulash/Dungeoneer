@@ -208,6 +208,24 @@ void ADungeon::RegenerateTiles()
 		RemovedISMCs[i]->UnregisterComponent();
 		RemovedISMCs[i]->DestroyComponent();
 	}
+
+	// step all the ISCMs and refresh there model/materials.
+	// this is done encase a mesh or material changed in a template.
+	TArray<FName> AllTemplates;
+	ISMCs.GetKeys(AllTemplates);
+	for (int i=0; i < AllTemplates.Num(); i++)
+	{
+		FName TemplateName = AllTemplates[i];
+		FDungeonModel Template = DungeonPalette.Models.FindRef(TemplateName);
+		UInstancedStaticMeshComponent* ISMC = ISMCs.FindRef(TemplateName);
+		if (ISMC)
+		{
+			ISMC->SetStaticMesh(Template.Mesh);
+			for (int m=0; m < Template.Materials.Num(); m++)
+				ISMC->SetMaterial(m, Template.Materials[m]);
+		}
+	}
+	
 	OnGenerated.Broadcast(this);
 }
 

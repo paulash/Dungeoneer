@@ -19,6 +19,9 @@ public:
 	virtual class FEdMode* GetEditorMode() const override;
 	virtual TSharedPtr<class SWidget> GetInlineContent() const override { return ToolkitWidget; }
 
+	virtual void BuildToolPalette(FName Palette, FToolBarBuilder& ToolbarBuilder) override;
+	virtual void GetToolPaletteNames(TArray<FName>& PaletteNames) const override;
+
 private:
 
 	TSharedPtr<SDungeoneerEditorWidget> ToolkitWidget;

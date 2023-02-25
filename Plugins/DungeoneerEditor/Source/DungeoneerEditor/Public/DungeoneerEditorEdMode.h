@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "EdMode.h"
 #include "Dungeon.h"
+#include "DungeoneerTool.h"
 
 struct HDungeonSegmentProxy : public HHitProxy
 {
@@ -30,15 +31,31 @@ public:
 	// FEdMode interface
 	virtual void Enter() override;
 	virtual void Exit() override;
+	virtual void Tick(FEditorViewportClient* ViewportClient, float DeltaTime) override;
 	virtual bool MouseMove(FEditorViewportClient* ViewportClient, FViewport* Viewport, int32 x, int32 y) override;
 	virtual void Render(const FSceneView* View, FViewport* Viewport, FPrimitiveDrawInterface* PDI) override;
 	virtual void DrawHUD(FEditorViewportClient* ViewportClient, FViewport* Viewport, const FSceneView* View, FCanvas* Canvas) override;
 	virtual bool HandleClick(FEditorViewportClient* InViewportClient, HHitProxy* HitProxy, const FViewportClick& Click) override;
 	virtual bool IsSelectionAllowed(AActor* InActor, bool bInSelection) const override;;
 	virtual bool UsesToolkits() const override { return true; };
+
+	virtual bool InputKey(FEditorViewportClient* ViewportClient, FViewport* Viewport, FKey Key, EInputEvent Event) override;
+	virtual bool InputDelta(FEditorViewportClient* InViewportClient, FViewport* InViewport, FVector& InDrag, FRotator& InRot, FVector& InScale) override;
+
+	virtual bool DisallowMouseDeltaTracking() const override { return usingTool; };
+	virtual bool StartTracking(FEditorViewportClient* InViewportClient, FViewport* InViewport) override;
+	virtual bool EndTracking(FEditorViewportClient* InViewportClient, FViewport* InViewport) override;
 	// End of FEdMode interface
 
+	bool usingTool = false;
 	ADungeon* LevelDungeon = NULL;
 	FName SelectedTemplate = NAME_None;
 	TSet<FIntVector4> SelectedSegments;
+	
+private:
+
+	void InitializeTool_Select();
+	TArray<TUniquePtr<FDungeoneerTool>> Tools;
+
+	FDungeoneerTool* CurrentTool;
 };
