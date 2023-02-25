@@ -72,7 +72,7 @@ public:
 	FTransform Offset;
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FDungeonTile
 {
 	GENERATED_BODY()
@@ -164,6 +164,31 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DeleteTile(FIntVector TilePoint);
 
+	UFUNCTION(BlueprintPure)
+	bool GetTile(FIntVector TilePoint, FDungeonTile& Tile)
+	{
+		Tile = Tiles.FindRef(TilePoint);
+		return Tiles.Contains(TilePoint);
+	}
+
+	UFUNCTION(BlueprintPure)
+	FIntVector DirectionToVector(EDungeonDirection Direction)
+	{
+		return DUNGEON_DIRECTIONS[(int)Direction];
+	};
+
+	UFUNCTION(BlueprintPure)
+	FRotator DirectionToRotator(EDungeonDirection Direction)
+	{
+		return FRotator(0, 0, (int)Direction * 90);
+	}
+
+	UFUNCTION(BlueprintPure)
+	FIntVector GetTileVectorInDirection(FIntVector Center, EDungeonDirection FacingDirection, EDungeonDirection SampleDirection)
+	{
+		
+	};
+
 	UFUNCTION(BlueprintCallable)
 	void SetSegmentTemplate(FIntVector TilePoint, EDungeonDirection Segment, FName Template);
 
@@ -173,11 +198,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RemoveTileGameplayTag(FIntVector TilePoint, FGameplayTag tag);
 
-	UFUNCTION(BlueprintCallable)
-	FGameplayTagContainer GetTileGameplayTags(FIntVector TilePoint);
+	UFUNCTION(BlueprintPure)
+	bool TileHasTag(FIntVector TilePoint, FGameplayTag tag)
+	{
+		if (!Tiles.Contains(TilePoint)) return false;
+		return Tiles[TilePoint].Tags.HasTag(tag);
+	};
 
 	UFUNCTION(BlueprintPure)
-	FIntVector GetWorldLocationToTilePoint(FVector WorldLocation)
+	FIntVector WorldLocationToTilePoint(FVector WorldLocation)
 	{
 		return FIntVector(
 			WorldLocation.X / Scale,
@@ -187,7 +216,7 @@ public:
 	};
 
 	UFUNCTION(BlueprintPure)
-	FVector GetTilePointToWorldLocation(FIntVector TilePoint)
+	FVector TilePointToWorldLocation(FIntVector TilePoint)
 	{
 		return FVector(
 			(TilePoint.X * Scale),

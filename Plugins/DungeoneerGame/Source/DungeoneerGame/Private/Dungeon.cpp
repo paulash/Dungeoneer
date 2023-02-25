@@ -119,12 +119,6 @@ void ADungeon::RemoveTileGameplayTag(FIntVector TilePoint, FGameplayTag tag)
 	OnTileTagsChanged.Broadcast(this, TilePoint);
 }
 
-FGameplayTagContainer ADungeon::GetTileGameplayTags(FIntVector TilePoint)
-{
-	if (!Tiles.Contains(TilePoint)) return FGameplayTagContainer();
-	return Tiles[TilePoint].Tags;
-}
-
 void ADungeon::RegenerateTiles()
 {
 	TArray<UActorComponent*> CurrentISMCs;

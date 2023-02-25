@@ -32,8 +32,6 @@ void SDungeoneerEditorWidget::Construct(const FArguments& InArgs)
 	
 	TemplateNameField = SNew(SEditableText)
 							.OnTextCommitted(this, &SDungeoneerEditorWidget::OnTemplateNameCommit);
-
-	//TemplateList.Visibility(this, &SDungeoneerEditorWidget::IsTemplateValid);
 	
 	ChildSlot
 	[
@@ -146,6 +144,9 @@ FReply SDungeoneerEditorWidget::AddModel()
 FReply SDungeoneerEditorWidget::RemoveModel()
 {
 	GetEdMode()->LevelDungeon->DungeonPalette.Models.Remove(GetEdMode()->SelectedTemplate);
+	GetEdMode()->SelectedTemplate = NAME_None;
+	TemplateList->SetSelection(NULL);
+	
 	RefreshTemplateList();
 	return FReply::Handled();
 }
