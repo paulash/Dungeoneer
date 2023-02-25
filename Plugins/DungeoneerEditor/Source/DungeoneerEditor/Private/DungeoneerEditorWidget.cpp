@@ -24,13 +24,16 @@ void SDungeoneerEditorWidget::Construct(const FArguments& InArgs)
 	RefreshTemplateList();
 
 	TSharedPtr<SButton> AddModel = SNew(SButton)
-									.Text(FText::FromString("Add Model"))
+									.Text(FText::FromString("Add Template"))
 									.OnClicked(this, &SDungeoneerEditorWidget::AddModel);
-	TSharedPtr<SButton> DeleteModel = SNew(SButton)
-									.Text(FText::FromString("Delete Model"))
+	TSharedPtr<SButton> RemoveModel = SNew(SButton)
+									.Text(FText::FromString("Remove Template"))
 									.OnClicked(this, &SDungeoneerEditorWidget::RemoveModel);
+	
+	TemplateNameField = SNew(SEditableText)
+							.OnTextCommitted(this, &SDungeoneerEditorWidget::OnTemplateNameCommit);
 
-	TemplateNameField = SNew(SEditableText);
+	//TemplateList.Visibility(this, &SDungeoneerEditorWidget::IsTemplateValid);
 	
 	ChildSlot
 	[
@@ -48,7 +51,7 @@ void SDungeoneerEditorWidget::Construct(const FArguments& InArgs)
 					+ SHorizontalBox::Slot()
 					.HAlign(HAlign_Fill)
 					[
-						DeleteModel.ToSharedRef()
+						RemoveModel.ToSharedRef()
 					]
 			]
 			+ SVerticalBox::Slot()
@@ -58,13 +61,13 @@ void SDungeoneerEditorWidget::Construct(const FArguments& InArgs)
 			]
 			+ SVerticalBox::Slot()
 			.VAlign(VAlign_Bottom)
-			.FillHeight(1.0f)
 			[
 				SNew(SVerticalBox)
 					+ SVerticalBox::Slot()
 					.AutoHeight()
 					[
 						SNew(SHorizontalBox)
+							.Visibility(this, &SDungeoneerEditorWidget::IsTemplateValid)
 							+ SHorizontalBox::Slot()
 							.HAlign(HAlign_Left)
 							.AutoWidth()
@@ -97,6 +100,7 @@ void SDungeoneerEditorWidget::OnSelectTemplateList(TSharedPtr<FString> Item, ESe
 	{
 		ModelDetails->SetStructureData(NULL);
 		TemplateNameField->SetText(FText::FromString(""));
+		GetEdMode()->SelectedTemplate = NAME_None;
 		return;
 	}
 	GetEdMode()->SelectedTemplate = FName(*Item);
@@ -144,4 +148,26 @@ FReply SDungeoneerEditorWidget::RemoveModel()
 	GetEdMode()->LevelDungeon->DungeonPalette.Models.Remove(GetEdMode()->SelectedTemplate);
 	RefreshTemplateList();
 	return FReply::Handled();
+}
+
+void SDungeoneerEditorWidget::OnTemplateNameCommit(const FText& text, ETextCommit::Type type)
+{
+	if (GetEdMode()->SelectedTemplate != NAME_None)
+	{
+		FDungeonModel model = GetEdMode()->LevelDungeon->DungeonPalette.Models[GetEdMode()->SelectedTemplate];
+		GetEdMode()->LevelDungeon->DungeonPalette.Models.Remove(GetEdMode()->SelectedTemplate);
+		GetEdMode()->LevelDungeon->DungeonPalette.Models.Emplace(FName(text.ToString()), model);
+		GetEdMode()->SelectedTemplate = FName(text.ToString());
+
+		RefreshTemplateList();
+		for (int i=0; i < TemplateNames.Num(); i++)
+		{
+			FName checkName = FName(*TemplateNames[i]);
+			if (checkName == GetEdMode()->SelectedTemplate)
+			{
+				TemplateList->SetSelection(TemplateNames[i]);
+				break;
+			}
+		}
+	}
 }

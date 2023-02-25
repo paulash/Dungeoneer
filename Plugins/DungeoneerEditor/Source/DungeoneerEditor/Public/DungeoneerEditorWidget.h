@@ -1,4 +1,5 @@
 #pragma once
+#include "DungeoneerEditorEdMode.h"
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/Views/SListView.h"
 #include "IStructureDetailsView.h"
@@ -40,4 +41,11 @@ private:
 
 	FReply AddModel();
 	FReply RemoveModel();
+
+	void OnTemplateNameCommit(const FText& text, ETextCommit::Type type);
+
+	EVisibility IsTemplateValid() const
+	{
+		return (GetEdMode()->SelectedTemplate != NAME_None) ? EVisibility::Visible : EVisibility::Collapsed;
+	}
 };

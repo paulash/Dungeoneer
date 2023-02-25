@@ -109,12 +109,14 @@ void ADungeon::AddTileGameplayTag(FIntVector TilePoint, FGameplayTag tag)
 {
 	if (!Tiles.Contains(TilePoint)) return;
 	Tiles[TilePoint].Tags.AddTag(tag);
+	OnTileTagsChanged.Broadcast(this, TilePoint);
 }
 
 void ADungeon::RemoveTileGameplayTag(FIntVector TilePoint, FGameplayTag tag)
 {
 	if (!Tiles.Contains(TilePoint)) return;
 	Tiles[TilePoint].Tags.RemoveTag(tag);
+	OnTileTagsChanged.Broadcast(this, TilePoint);
 }
 
 FGameplayTagContainer ADungeon::GetTileGameplayTags(FIntVector TilePoint)
@@ -212,6 +214,7 @@ void ADungeon::RegenerateTiles()
 		RemovedISMCs[i]->UnregisterComponent();
 		RemovedISMCs[i]->DestroyComponent();
 	}
+	OnGenerated.Broadcast(this);
 }
 
 UInstancedStaticMeshComponent* ADungeon::GetInstancedMeshComponent(FName TemplateName)

@@ -108,6 +108,8 @@ public:
 
 class ADungeon;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnRefreshTile, ADungeon*, Dungeon, FIntVector, TilePoint);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTileTagsChanged, ADungeon*, Dungeon, FIntVector, TilePoint);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGenerated, ADungeon*, Dungeon);
 
 UCLASS(BlueprintType, NotBlueprintable)
 class DUNGEONEERGAME_API ADungeon final : public AActor
@@ -118,6 +120,12 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnRefreshTile OnRefreshTile;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnGenerated OnGenerated;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnTileTagsChanged OnTileTagsChanged;
 
 	ADungeon();
 
