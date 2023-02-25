@@ -39,12 +39,13 @@ public:
 	virtual bool IsSelectionAllowed(AActor* InActor, bool bInSelection) const override;;
 	virtual bool UsesToolkits() const override { return true; };
 
+	virtual bool GetCursor(EMouseCursor::Type& OutCursor) const override { return false; };
+	virtual bool GetOverrideCursorVisibility(bool& bWantsOverride, bool& bHardwareCursorVisible, bool bSoftwareCursorVisible) const override { return false; };
+
 	virtual bool InputKey(FEditorViewportClient* ViewportClient, FViewport* Viewport, FKey Key, EInputEvent Event) override;
 	virtual bool InputDelta(FEditorViewportClient* InViewportClient, FViewport* InViewport, FVector& InDrag, FRotator& InRot, FVector& InScale) override;
 
 	virtual bool DisallowMouseDeltaTracking() const override { return usingTool; };
-	virtual bool StartTracking(FEditorViewportClient* InViewportClient, FViewport* InViewport) override;
-	virtual bool EndTracking(FEditorViewportClient* InViewportClient, FViewport* InViewport) override;
 	// End of FEdMode interface
 
 	bool usingTool = false;

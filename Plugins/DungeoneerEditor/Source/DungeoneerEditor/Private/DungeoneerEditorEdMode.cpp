@@ -87,92 +87,27 @@ void FDungeoneerEditorEdMode::Tick(FEditorViewportClient* ViewportClient, float 
 
 bool FDungeoneerEditorEdMode::MouseMove(FEditorViewportClient* ViewportClient, FViewport* Viewport, int32 x, int32 y)
 {
-	HHitProxy* HitProxy = Viewport->GetHitProxy(x, y);
-	if (HitProxy && HitProxy->IsA(HDungeonSegmentProxy::StaticGetType()))
-	{
-		HDungeonSegmentProxy* SegmentProxy = (HDungeonSegmentProxy*)HitProxy;
-		
-	}
-	return FEdMode::MouseMove(ViewportClient, Viewport, x, y);
+	return CurrentTool->MouseMove(ViewportClient, Viewport, x, y);
 }
 
 void FDungeoneerEditorEdMode::Render(const FSceneView* View, FViewport* Viewport, FPrimitiveDrawInterface* PDI)
 {
 	FEdMode::Render(View, Viewport, PDI);
-	//MousePosition.X = FMath::Clamp(Viewport->GetMouseX(), 0, Viewport->GetSizeXY().X-1);
-	//MousePosition.Y = FMath::Clamp(Viewport->GetMouseY(), 0, Viewport->GetSizeXY().Y-1);
-	
 	if (!LevelDungeon) return;
-	
-	TArray<FIntVector> TilePoints;
-	LevelDungeon->Tiles.GetKeys(TilePoints);
-	for (int i=0; i < TilePoints.Num(); i++)
-	{
-		FDungeonTile Tile = LevelDungeon->Tiles[TilePoints[i]];
-		for (int s=0; s < DUNGEON_SEGMENT_COUNT; s++)
-		{
-			if (LevelDungeon->Tiles.Contains(TilePoints[i] + DUNGEON_DIRECTIONS[s]))
-				continue;
-			
-			FVector WorldPosition =
-				LevelDungeon->GetActorLocation() +
-				FVector(
-					TilePoints[i].X * LevelDungeon->Scale,
-					TilePoints[i].Y * LevelDungeon->Scale,
-					(TilePoints[i].Z * LevelDungeon->Scale) + (LevelDungeon->Scale * 0.5));
-			
-			FVector center = FVector(
-			((DUNGEON_DIRECTIONS[s].X * 0.5f) * LevelDungeon->Scale) - DUNGEON_DIRECTIONS[s].X,
-			((DUNGEON_DIRECTIONS[s].Y * 0.5f) * LevelDungeon->Scale) - DUNGEON_DIRECTIONS[s].Y,
-			((DUNGEON_DIRECTIONS[s].Z * 0.5f) * LevelDungeon->Scale) - DUNGEON_DIRECTIONS[s].Z);
-			center -= FVector(
-				DUNGEON_DIRECTIONS[s].X,
-				DUNGEON_DIRECTIONS[s].Y,
-				DUNGEON_DIRECTIONS[s].Z);
-
-			FIntVector4 SegmentPoint = FIntVector4(
-				TilePoints[i].X,
-				TilePoints[i].Y,
-				TilePoints[i].Z,
-				s);
-
-			bool selected = SelectedSegments.Contains(SegmentPoint);
-			bool hovered = false;
-			
-			PDI->SetHitProxy(new HDungeonSegmentProxy(TilePoints[i], (EDungeonDirection)s));
-			FMaterialRenderProxy* ProxyMaterial = selected ?
-					LevelDungeon->TileSelectedMaterial->GetRenderProxy() :
-					LevelDungeon->TileUnselectedMaterial->GetRenderProxy();;
-			if (hovered)
-			{
-				ProxyMaterial = selected ?
-					LevelDungeon->TileHoveredSelectedMaterial->GetRenderProxy() :
-					LevelDungeon->TileHoveredUnselectedMaterial->GetRenderProxy();	
-			}
-
-			DrawPlane10x10(PDI,
-				FTransform(
-					DUNGEON_SEGMENT_ROTATIONS[s],
-					center + WorldPosition).ToMatrixNoScale(),
-				(LevelDungeon->Scale * 0.5f) - 1,
-				FVector2D(0, 0),
-				FVector2D(1, 1),
-				ProxyMaterial,
-				SDPG_World);
-		}
-	}
+	CurrentTool->Render(View, Viewport, PDI);
 }
 
 void FDungeoneerEditorEdMode::DrawHUD(FEditorViewportClient* ViewportClient, FViewport* Viewport,
 	const FSceneView* View, FCanvas* Canvas)
 {
-	Canvas->DrawShadowedText(10, 100, FText::FromString("Test Text"), GEditor->EditorFont, FLinearColor::Red);
 	CurrentTool->DrawHUD(ViewportClient, Viewport, View, Canvas);
 }
 
 bool FDungeoneerEditorEdMode::HandleClick(FEditorViewportClient* InViewportClient, HHitProxy* HitProxy,
                                           const FViewportClick& Click)
 {
+	return CurrentTool->HandleClick(InViewportClient, HitProxy, Click);
+	/*
 	if (!HitProxy)
 	{
 		SelectedSegments.Empty();
@@ -216,6 +151,7 @@ bool FDungeoneerEditorEdMode::HandleClick(FEditorViewportClient* InViewportClien
 	}
 	SelectedSegments.Empty();
 	return FEdMode::HandleClick(InViewportClient, HitProxy, Click);
+	*/
 }
 
 bool FDungeoneerEditorEdMode::IsSelectionAllowed(AActor* InActor, bool bInSelection) const
@@ -226,34 +162,13 @@ bool FDungeoneerEditorEdMode::IsSelectionAllowed(AActor* InActor, bool bInSelect
 bool FDungeoneerEditorEdMode::InputKey(FEditorViewportClient* ViewportClient, FViewport* Viewport, FKey Key,
 	EInputEvent Event)
 {
-	usingTool = IsCtrlDown(Viewport) || IsShiftDown(Viewport);
-	//Viewport->CaptureMouse(usingTool);
-
-	
-	
-	if (usingTool && Event == IE_Released && Key == EKeys::LeftMouseButton)
-	{
-		Viewport->SetPreCaptureMousePosFromSlateCursor();
-	}
-	
-	return FEdMode::InputKey(ViewportClient, Viewport, Key, Event);
+	return CurrentTool->InputKey(ViewportClient, Viewport, Key, Event);
 }
 
 bool FDungeoneerEditorEdMode::InputDelta(FEditorViewportClient* InViewportClient, FViewport* InViewport,
 	FVector& InDrag, FRotator& InRot, FVector& InScale)
 {
-	if (usingTool) return true;
-	return FEdMode::InputDelta(InViewportClient, InViewport, InDrag, InRot, InScale);
-}
-
-bool FDungeoneerEditorEdMode::StartTracking(FEditorViewportClient* InViewportClient, FViewport* InViewport)
-{
-	return FEdMode::StartTracking(InViewportClient, InViewport);
-}
-
-bool FDungeoneerEditorEdMode::EndTracking(FEditorViewportClient* InViewportClient, FViewport* InViewport)
-{
-	return FEdMode::EndTracking(InViewportClient, InViewport);
+	return CurrentTool->InputDelta(InViewportClient, InViewport, InDrag, InRot, InScale);
 }
 
 void FDungeoneerEditorEdMode::InitializeTool_Select()
