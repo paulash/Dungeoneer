@@ -35,4 +35,9 @@ private:
 	void OnFinishDetails(const FPropertyChangedEvent& evt);
 
 	TSharedPtr<IStructureDetailsView> ModelDetails;
+
+	TSharedPtr<SEditableText> TemplateNameField;
+
+	FReply AddModel();
+	FReply RemoveModel();
 };
