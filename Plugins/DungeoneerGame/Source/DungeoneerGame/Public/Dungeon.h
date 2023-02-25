@@ -186,7 +186,7 @@ public:
 	UFUNCTION(BlueprintPure)
 	FIntVector GetTileVectorInDirection(FIntVector Center, EDungeonDirection FacingDirection, EDungeonDirection SampleDirection)
 	{
-		
+		return FIntVector(0,0,0);
 	};
 
 	UFUNCTION(BlueprintCallable)
