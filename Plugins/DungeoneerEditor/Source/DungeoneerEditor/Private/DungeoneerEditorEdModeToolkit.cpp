@@ -15,12 +15,16 @@ void FDungeoneerEditorEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitTo
 {
 	const auto& Commands = FDungeoneerEditorCommands::Get();
 	TSharedRef<FUICommandList> CommandList = GetToolkitCommands();
-
-	//#define MAP_TOOL(ToolName) CommandList->MapAction(NameToCommandMap.FindChecked("Tool_" ToolName), FUIAction(FExecuteAction::CreateSP(this, &FLandscapeToolKit::OnChangeTool, FName(ToolName)), FCanExecuteAction::CreateSP(this, &FLandscapeToolKit::IsToolEnabled, FName(ToolName)), FIsActionChecked::CreateSP(this, &FLandscapeToolKit::IsToolActive, FName(ToolName)), FIsActionButtonVisible::CreateSP(this, &FLandscapeToolKit::IsToolAvailable, FName(ToolName))));
+	auto NameToCommandMap = Commands.NameToCommandMap;
 	
-	CommandList->MapAction(
-		Commands.SelectTool,
-		FUIAction(FExecuteAction::CreateSP(this, &FDungeoneerEditorEdModeToolkit::OnChangeTool, FName("TOOL_PAINT"))));
+	for (const TPair<FName, TSharedPtr<FUICommandInfo>>& pair : NameToCommandMap)
+	{
+		CommandList->MapAction(pair.Value,
+		FExecuteAction::CreateSP(this, &FDungeoneerEditorEdModeToolkit::OnChangeTool, pair.Key),
+			FCanExecuteAction::CreateSP(this, &FDungeoneerEditorEdModeToolkit::IsToolEnabled, pair.Key),
+			FIsActionChecked::CreateSP(this, &FDungeoneerEditorEdModeToolkit::IsToolActive, pair.Key)
+		);
+	}
 	
 	SAssignNew(ToolkitWidget, SDungeoneerEditorWidget);
 	FModeToolkit::Init(InitToolkitHost);
@@ -61,13 +65,24 @@ void FDungeoneerEditorEdModeToolkit::OnToolPaletteChanged(FName PaletteName)
 	FModeToolkit::OnToolPaletteChanged(PaletteName);
 }
 
-void FDungeoneerEditorEdModeToolkit::OnChangeTool(FName _NewToolName)
+void FDungeoneerEditorEdModeToolkit::OnChangeTool(FName _ToolName)
 {
+	GetEditorMode()->SetCurrentTool(_ToolName);
 }
 
-class FEdMode* FDungeoneerEditorEdModeToolkit::GetEditorMode() const
+bool FDungeoneerEditorEdModeToolkit::IsToolEnabled(FName _ToolName) const
 {
-	return GLevelEditorModeTools().GetActiveMode(FDungeoneerEditorEdMode::EM_DungeoneerEditorEdModeId);
+	return true;
+}
+
+bool FDungeoneerEditorEdModeToolkit::IsToolActive(FName _ToolName) const
+{
+	return GetEditorMode()->CurrentTool->GetToolName() == _ToolName;
+}
+
+FDungeoneerEditorEdMode* FDungeoneerEditorEdModeToolkit::GetEditorMode() const
+{
+	return (FDungeoneerEditorEdMode*)GLevelEditorModeTools().GetActiveMode(FDungeoneerEditorEdMode::EM_DungeoneerEditorEdModeId);
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -1,6 +1,7 @@
 
 #include "DungeoneerEditorEdMode.h"
 #include "DungeoneerEditorEdModeToolkit.h"
+#include "DungeoneerPaintTool.h"
 #include "Toolkits/ToolkitManager.h"
 #include "EditorModeManager.h"
 #include "EngineUtils.h"
@@ -13,7 +14,13 @@ const FEditorModeID FDungeoneerEditorEdMode::EM_DungeoneerEditorEdModeId = TEXT(
 FDungeoneerEditorEdMode::FDungeoneerEditorEdMode()
 {
 	Tools.Empty();
-	InitializeTool_Select();
+
+	auto Tool_Select = MakeUnique<FDungeoneerSelectTool>(this);
+	Tools.Emplace(MoveTemp(Tool_Select));
+
+	auto Tool_Paint = MakeUnique<FDungeoneerPaintTool>(this);
+	Tools.Emplace(MoveTemp(Tool_Paint));
+	
 	CurrentTool = Tools[0].Get();
 }
 
@@ -171,12 +178,18 @@ bool FDungeoneerEditorEdMode::InputDelta(FEditorViewportClient* InViewportClient
 	return CurrentTool->InputDelta(InViewportClient, InViewport, InDrag, InRot, InScale);
 }
 
-void FDungeoneerEditorEdMode::InitializeTool_Select()
+void FDungeoneerEditorEdMode::SetCurrentTool(FName _ToolName)
 {
-	auto Tool_Select = MakeUnique<FDungeoneerSelectTool>(this);
-	Tools.Emplace(MoveTemp(Tool_Select));
+	for (int i=0; i < Tools.Num(); i++)
+	{
+		if (Tools[i]->GetToolName() == _ToolName)
+		{
+			CurrentTool = Tools[i].Get();
+			return;
+		}
+	}
+	
 }
-
 
 
 

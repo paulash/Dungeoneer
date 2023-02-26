@@ -16,7 +16,7 @@ public:
 	/** IToolkit interface */
 	virtual FName GetToolkitFName() const override;
 	virtual FText GetBaseToolkitName() const override;
-	virtual class FEdMode* GetEditorMode() const override;
+	virtual FDungeoneerEditorEdMode* GetEditorMode() const override;
 	virtual TSharedPtr<class SWidget> GetInlineContent() const override { return ToolkitWidget; }
 
 	virtual void BuildToolPalette(FName Palette, FToolBarBuilder& ToolbarBuilder) override;
@@ -25,7 +25,9 @@ public:
 
 private:
 
-	void OnChangeTool(FName _NewToolName);
+	void OnChangeTool(FName _ToolName);
+	bool IsToolEnabled(FName _ToolName) const;
+	bool IsToolActive(FName _ToolName) const;
 
 	TSharedPtr<SDungeoneerEditorWidget> ToolkitWidget;
 };

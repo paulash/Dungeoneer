@@ -46,17 +46,19 @@ public:
 	virtual bool InputDelta(FEditorViewportClient* InViewportClient, FViewport* InViewport, FVector& InDrag, FRotator& InRot, FVector& InScale) override;
 
 	virtual bool DisallowMouseDeltaTracking() const override { return usingTool; };
+	virtual bool ShouldDrawWidget() const override { return false; };
 	// End of FEdMode interface
 
 	bool usingTool = false;
 	ADungeon* LevelDungeon = NULL;
 	FName SelectedTemplate = NAME_None;
 	TSet<FIntVector4> SelectedSegments;
-	
-private:
-
-	void InitializeTool_Select();
-	TArray<TUniquePtr<FDungeoneerTool>> Tools;
 
 	FDungeoneerTool* CurrentTool;
+
+	void SetCurrentTool(FName _ToolName);
+	
+private:
+	
+	TArray<TUniquePtr<FDungeoneerTool>> Tools;
 };
