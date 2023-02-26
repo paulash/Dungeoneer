@@ -17,6 +17,7 @@ public:
 	static FName DungeoneerContext;
 
 	TSharedPtr<FUICommandInfo> SelectTool;
+	TSharedPtr<FUICommandInfo> PaintTool;
 	
 	TMap<FName, TSharedPtr<FUICommandInfo>> NameToCommandMap;
 };

@@ -1,3 +1,0 @@
-disable search in template details.
-setup toolbar
-create tools to replace all the behaior in the edmode

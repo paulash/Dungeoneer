@@ -21,8 +21,11 @@ public:
 
 	virtual void BuildToolPalette(FName Palette, FToolBarBuilder& ToolbarBuilder) override;
 	virtual void GetToolPaletteNames(TArray<FName>& PaletteNames) const override;
+	virtual void OnToolPaletteChanged(FName PaletteName) override;
 
 private:
+
+	void SetSelectTool();
 
 	TSharedPtr<SDungeoneerEditorWidget> ToolkitWidget;
 };

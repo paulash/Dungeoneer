@@ -13,6 +13,13 @@ FDungeoneerEditorEdModeToolkit::FDungeoneerEditorEdModeToolkit()
 
 void FDungeoneerEditorEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitHost)
 {
+	const auto& Commands = FDungeoneerEditorCommands::Get();
+	TSharedRef<FUICommandList> CommandList = GetToolkitCommands();
+
+	CommandList->MapAction(
+		Commands.SelectTool,
+		FExecuteAction::CreateSP(this, &FDungeoneerEditorEdModeToolkit::SetSelectTool));
+	
 	SAssignNew(ToolkitWidget, SDungeoneerEditorWidget);
 	FModeToolkit::Init(InitToolkitHost);
 }
@@ -33,7 +40,8 @@ void FDungeoneerEditorEdModeToolkit::BuildToolPalette(FName Palette, FToolBarBui
 	
 	ToolbarBuilder.BeginSection("Manage");
 	ToolbarBuilder.AddToolBarButton(Commands.SelectTool);
-	ToolbarBuilder.AddSeparator();
+	ToolbarBuilder.AddToolBarButton(Commands.PaintTool);
+	ToolbarBuilder.EndSection();
 	
 	FModeToolkit::BuildToolPalette(Palette, ToolbarBuilder);
 }
@@ -44,6 +52,16 @@ void FDungeoneerEditorEdModeToolkit::GetToolPaletteNames(TArray<FName>& PaletteN
 	{
 		PaletteNames = { FName("Managed") };
 	}
+}
+
+void FDungeoneerEditorEdModeToolkit::OnToolPaletteChanged(FName PaletteName)
+{
+	FModeToolkit::OnToolPaletteChanged(PaletteName);
+}
+
+void FDungeoneerEditorEdModeToolkit::SetSelectTool()
+{
+	
 }
 
 class FEdMode* FDungeoneerEditorEdModeToolkit::GetEditorMode() const

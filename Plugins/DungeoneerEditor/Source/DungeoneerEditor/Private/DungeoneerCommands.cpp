@@ -18,4 +18,7 @@ void FDungeoneerEditorCommands::RegisterCommands()
 {
 	UI_COMMAND(SelectTool, "Select", "Select tiles, shift click to multi-select", EUserInterfaceActionType::RadioButton, FInputChord());
 	NameToCommandMap.Add("Tool_Select", SelectTool);
+
+	UI_COMMAND(PaintTool, "Paint", "Select tiles, shift click to multi-select", EUserInterfaceActionType::RadioButton, FInputChord());
+	NameToCommandMap.Add("Tool_Paint", PaintTool);
 }
