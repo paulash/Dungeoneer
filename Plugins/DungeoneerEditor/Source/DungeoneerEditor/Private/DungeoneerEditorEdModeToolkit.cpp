@@ -16,9 +16,11 @@ void FDungeoneerEditorEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitTo
 	const auto& Commands = FDungeoneerEditorCommands::Get();
 	TSharedRef<FUICommandList> CommandList = GetToolkitCommands();
 
+	//#define MAP_TOOL(ToolName) CommandList->MapAction(NameToCommandMap.FindChecked("Tool_" ToolName), FUIAction(FExecuteAction::CreateSP(this, &FLandscapeToolKit::OnChangeTool, FName(ToolName)), FCanExecuteAction::CreateSP(this, &FLandscapeToolKit::IsToolEnabled, FName(ToolName)), FIsActionChecked::CreateSP(this, &FLandscapeToolKit::IsToolActive, FName(ToolName)), FIsActionButtonVisible::CreateSP(this, &FLandscapeToolKit::IsToolAvailable, FName(ToolName))));
+	
 	CommandList->MapAction(
 		Commands.SelectTool,
-		FExecuteAction::CreateSP(this, &FDungeoneerEditorEdModeToolkit::SetSelectTool));
+		FUIAction(FExecuteAction::CreateSP(this, &FDungeoneerEditorEdModeToolkit::OnChangeTool, FName("TOOL_PAINT"))));
 	
 	SAssignNew(ToolkitWidget, SDungeoneerEditorWidget);
 	FModeToolkit::Init(InitToolkitHost);
@@ -59,9 +61,8 @@ void FDungeoneerEditorEdModeToolkit::OnToolPaletteChanged(FName PaletteName)
 	FModeToolkit::OnToolPaletteChanged(PaletteName);
 }
 
-void FDungeoneerEditorEdModeToolkit::SetSelectTool()
+void FDungeoneerEditorEdModeToolkit::OnChangeTool(FName _NewToolName)
 {
-	
 }
 
 class FEdMode* FDungeoneerEditorEdModeToolkit::GetEditorMode() const

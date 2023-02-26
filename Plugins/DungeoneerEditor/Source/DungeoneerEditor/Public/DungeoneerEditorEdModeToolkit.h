@@ -25,7 +25,7 @@ public:
 
 private:
 
-	void SetSelectTool();
+	void OnChangeTool(FName _NewToolName);
 
 	TSharedPtr<SDungeoneerEditorWidget> ToolkitWidget;
 };
