@@ -1,4 +1,5 @@
 #pragma once
+#include "DetailLayoutBuilder.h"
 #include "UObject/GCObject.h"
 
 class FDungeoneerEditorEdMode;
@@ -19,6 +20,8 @@ public:
 
 	virtual bool InputKey(FEditorViewportClient* ViewportClient, FViewport* Viewport, FKey Key, EInputEvent Event) { return false; };
 	virtual bool InputDelta(FEditorViewportClient* InViewportClient, FViewport* InViewport, FVector& InDrag, FRotator& InRot, FVector& InScale) { return false; };
+
+	virtual void CustomizeDetails(IDetailLayoutBuilder* DetailedLayout) { };
 
 protected:
 	FDungeoneerEditorEdMode* Mode;

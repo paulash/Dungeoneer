@@ -26,7 +26,7 @@ void FDungeoneerEditorEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitTo
 		);
 	}
 	
-	SAssignNew(ToolkitWidget, SDungeoneerEditorWidget);
+	SAssignNew(ToolkitWidget, SDungeoneerEditorWidget); // turn this into a IDetailLayout panel.
 	FModeToolkit::Init(InitToolkitHost);
 }
 
@@ -68,6 +68,7 @@ void FDungeoneerEditorEdModeToolkit::OnToolPaletteChanged(FName PaletteName)
 void FDungeoneerEditorEdModeToolkit::OnChangeTool(FName _ToolName)
 {
 	GetEditorMode()->SetCurrentTool(_ToolName);
+	// clear and rebuild the detail layout here.
 }
 
 bool FDungeoneerEditorEdModeToolkit::IsToolEnabled(FName _ToolName) const

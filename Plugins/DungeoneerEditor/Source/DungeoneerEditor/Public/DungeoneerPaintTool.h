@@ -7,6 +7,8 @@ public:
 	FDungeoneerPaintTool(FDungeoneerEditorEdMode* _Mode) : FDungeoneerTool(_Mode) {}
 
 	virtual FName GetToolName() override { return "TOOL_PAINT"; };
+
+	virtual void CustomizeDetails(IDetailLayoutBuilder* DetailedLayout) override;
 	
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override {};
 };
