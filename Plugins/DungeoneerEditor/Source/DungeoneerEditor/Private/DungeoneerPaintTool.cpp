@@ -1,6 +1,8 @@
 #include "DungeoneerPaintTool.h"
 
-void FDungeoneerPaintTool::CustomizeDetails(IDetailLayoutBuilder* DetailedLayout)
+#include "DungeoneerTemplateWidget.h"
+
+TSharedPtr<SCompoundWidget> FDungeoneerPaintTool::GenerateToolPanel()
 {
-	FDungeoneerTool::CustomizeDetails(DetailedLayout);
+	return SNew(SDungeoneerTemplateWidget);
 }

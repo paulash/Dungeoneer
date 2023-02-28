@@ -21,7 +21,7 @@ public:
 	virtual bool InputKey(FEditorViewportClient* ViewportClient, FViewport* Viewport, FKey Key, EInputEvent Event) { return false; };
 	virtual bool InputDelta(FEditorViewportClient* InViewportClient, FViewport* InViewport, FVector& InDrag, FRotator& InRot, FVector& InScale) { return false; };
 
-	virtual void CustomizeDetails(IDetailLayoutBuilder* DetailedLayout) { };
+	virtual TSharedPtr<SCompoundWidget> GenerateToolPanel() { return NULL; };
 
 protected:
 	FDungeoneerEditorEdMode* Mode;

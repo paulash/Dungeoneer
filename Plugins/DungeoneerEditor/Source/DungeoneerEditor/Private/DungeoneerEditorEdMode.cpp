@@ -185,6 +185,12 @@ void FDungeoneerEditorEdMode::SetCurrentTool(FName _ToolName)
 		if (Tools[i]->GetToolName() == _ToolName)
 		{
 			CurrentTool = Tools[i].Get();
+			FDungeoneerEditorEdModeToolkit* _toolkit = (FDungeoneerEditorEdModeToolkit*)Toolkit.Get();
+			if (_toolkit)
+			{
+				SDungeoneerEditorWidget* widget = (SDungeoneerEditorWidget*)_toolkit->GetInlineContent().Get();
+				widget->OnCurrentToolChange();
+			}
 			return;
 		}
 	}

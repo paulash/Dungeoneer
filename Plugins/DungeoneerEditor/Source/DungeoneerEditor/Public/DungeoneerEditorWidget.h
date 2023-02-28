@@ -13,7 +13,12 @@ public:
 
 	// Util Functions
 	class FDungeoneerEditorEdMode* GetEdMode() const;
+	
+	void OnCurrentToolChange();
 
 private:
+	
 	TSharedPtr<SDungeoneerTemplateWidget> TemplateWidget;
+
+	TSharedPtr<SBorder> InnerBorder;
 };

@@ -40,6 +40,7 @@ void SDungeoneerTemplateWidget::Construct(const FArguments& InArgs)
 	TemplateNameField = SNew(SEditableText)
 							.OnTextCommitted(this, &SDungeoneerTemplateWidget::OnTemplateNameCommit);
 	
+	
 	ChildSlot
 	[
 		SNew(SVerticalBox)

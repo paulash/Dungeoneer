@@ -8,7 +8,7 @@ public:
 
 	virtual FName GetToolName() override { return "TOOL_PAINT"; };
 
-	virtual void CustomizeDetails(IDetailLayoutBuilder* DetailedLayout) override;
+	virtual TSharedPtr<SCompoundWidget> GenerateToolPanel() override;
 	
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override {};
 };

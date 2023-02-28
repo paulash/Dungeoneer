@@ -8,17 +8,29 @@
 
 void SDungeoneerEditorWidget::Construct(const FArguments& InArgs)
 {
-	TemplateWidget = SNew(SDungeoneerTemplateWidget);
+	InnerBorder = SNew(SBorder)
+		.BorderImage(FEditorStyle::GetBrush(TEXT("Graph.TitleBackground")))
+		.VAlign(VAlign_Fill)
+		.Padding(2);
 	
-	ChildSlot
-	[
-			SNew(SBorder)
-				.BorderImage(FEditorStyle::GetBrush(TEXT("Graph.TitleBackground")))
-				.VAlign(VAlign_Fill)
-				.Padding(2)
-				[
-					TemplateWidget.ToSharedRef()
-				]
-	];
+	ChildSlot[InnerBorder.ToSharedRef()];
+}
 
+FDungeoneerEditorEdMode* SDungeoneerEditorWidget::GetEdMode() const
+{
+	return (FDungeoneerEditorEdMode*)GLevelEditorModeTools().GetActiveMode(FDungeoneerEditorEdMode::EM_DungeoneerEditorEdModeId);
+}
+
+void SDungeoneerEditorWidget::OnCurrentToolChange()
+{
+	TSharedPtr<SCompoundWidget> toolWidget = GetEdMode()->CurrentTool->GenerateToolPanel();
+	if (toolWidget)
+	{
+		InnerBorder.ToSharedRef()->SetContent(toolWidget.ToSharedRef());	
+	}
+	else
+	{
+		InnerBorder.ToSharedRef()->ClearContent();	
+	}
+	
 }
