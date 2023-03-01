@@ -10,6 +10,8 @@ public:
 	
 	virtual void DrawHUD(FEditorViewportClient* ViewportClient, FViewport* Viewport, const FSceneView* View, FCanvas* Canvas) override;
 	virtual void Render(const FSceneView* View, FViewport* Viewport, FPrimitiveDrawInterface* PDI) override;
+
+	virtual TSharedPtr<SCompoundWidget> GenerateToolPanel() override;
 	
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override {};
 };

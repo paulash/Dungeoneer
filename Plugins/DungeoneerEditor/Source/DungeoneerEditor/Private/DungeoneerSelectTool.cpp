@@ -1,6 +1,7 @@
 #include "DungeoneerSelectTool.h"
 #include "Dungeon.h"
 #include "DungeoneerEditorEdMode.h"
+#include "DungeoneerSelectWidget.h"
 #include "Materials/MaterialInstanceDynamic.h"
 
 void FDungeoneerSelectTool::DrawHUD(FEditorViewportClient* ViewportClient, FViewport* Viewport, const FSceneView* View,
@@ -70,4 +71,9 @@ void FDungeoneerSelectTool::Render(const FSceneView* View, FViewport* Viewport, 
 				SDPG_World);
 		}
 	}
+}
+
+TSharedPtr<SCompoundWidget> FDungeoneerSelectTool::GenerateToolPanel()
+{
+	return SNew(SDungeoneerSelectWidget);
 }
