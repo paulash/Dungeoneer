@@ -72,6 +72,7 @@ void FDungeoneerEditorEdMode::Enter()
 		Toolkit = MakeShareable(new FDungeoneerEditorEdModeToolkit);
 		Toolkit->Init(Owner->GetToolkitHost());
 	}
+	SetCurrentTool(CurrentTool->GetToolName());
 }
 
 void FDungeoneerEditorEdMode::Exit()
@@ -114,51 +115,6 @@ bool FDungeoneerEditorEdMode::HandleClick(FEditorViewportClient* InViewportClien
                                           const FViewportClick& Click)
 {
 	return CurrentTool->HandleClick(InViewportClient, HitProxy, Click);
-	/*
-	if (!HitProxy)
-	{
-		SelectedSegments.Empty();
-		return FEdMode::HandleClick(InViewportClient, HitProxy, Click);
-	}
-	if (HitProxy->IsA(HDungeonSegmentProxy::StaticGetType()))
-	{
-		HDungeonSegmentProxy* SegmentProxy = (HDungeonSegmentProxy*)HitProxy;
-		if (Click.IsShiftDown() && Click.IsControlDown())
-		{
-			LevelDungeon->DeleteTile(SegmentProxy->TilePoint);
-		}
-		else if (Click.IsShiftDown())
-		{
-			// paint template.
-			LevelDungeon->SetSegmentTemplate(SegmentProxy->TilePoint, SegmentProxy->Segment, SelectedTemplate);
-		}
-		else if (Click.IsControlDown())
-		{
-			LevelDungeon->CreateTile(
-				SegmentProxy->TilePoint + DUNGEON_DIRECTIONS[(int)SegmentProxy->Segment]);
-		}
-		else
-		{
-			FIntVector4 Selection = FIntVector4(
-				SegmentProxy->TilePoint.X,
-				SegmentProxy->TilePoint.Y,
-				SegmentProxy->TilePoint.Z,
-				(int)SegmentProxy->Segment);
-			
-			if (!Click.IsShiftDown())
-				SelectedSegments.Empty();
-
-			if (!SelectedSegments.Contains(Selection))
-			{
-				//GetToolKit()->SelectTileSegment(Selection);
-				SelectedSegments.Emplace(Selection);
-			}
-		}
-		return true;
-	}
-	SelectedSegments.Empty();
-	return FEdMode::HandleClick(InViewportClient, HitProxy, Click);
-	*/
 }
 
 bool FDungeoneerEditorEdMode::IsSelectionAllowed(AActor* InActor, bool bInSelection) const

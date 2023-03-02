@@ -40,13 +40,13 @@ void FDungeoneerSelectTool::Render(const FSceneView* View, FViewport* Viewport, 
 				DUNGEON_DIRECTIONS[s].Y,
 				DUNGEON_DIRECTIONS[s].Z);
 
-			FIntVector4 SegmentPoint = FIntVector4(
+			FVector4 SegmentPoint = FVector4(
 				TilePoints[i].X,
 				TilePoints[i].Y,
 				TilePoints[i].Z,
 				s);
 
-			bool selected = false;//SelectedSegments.Contains(SegmentPoint);
+			bool selected = SelectedSegments.Contains(SegmentPoint);
 			bool hovered = false;
 			
 			PDI->SetHitProxy(new HDungeonSegmentProxy(TilePoints[i], (EDungeonDirection)s));
@@ -69,8 +69,49 @@ void FDungeoneerSelectTool::Render(const FSceneView* View, FViewport* Viewport, 
 				FVector2D(1, 1),
 				ProxyMaterial,
 				SDPG_World);
+			PDI->SetHitProxy(NULL);
 		}
 	}
+}
+
+bool FDungeoneerSelectTool::HandleClick(FEditorViewportClient* InViewportClient, HHitProxy* HitProxy,
+	const FViewportClick& Click)
+{
+	
+	if (!HitProxy)
+	{
+		SelectedSegments.Empty();
+		return FDungeoneerTool::HandleClick(InViewportClient, HitProxy, Click);
+	}
+	if (HitProxy->IsA(HDungeonSegmentProxy::StaticGetType()))
+	{
+		HDungeonSegmentProxy* SegmentProxy = (HDungeonSegmentProxy*)HitProxy;
+		if (Click.IsControlDown())
+		{
+			Mode->LevelDungeon->CreateTile(
+				SegmentProxy->TilePoint + DUNGEON_DIRECTIONS[(int)SegmentProxy->Segment]);
+		}
+		else
+		{
+			FVector4 Selection = FVector4(
+				SegmentProxy->TilePoint.X,
+				SegmentProxy->TilePoint.Y,
+				SegmentProxy->TilePoint.Z,
+				(int)SegmentProxy->Segment);
+			
+			if (!Click.IsShiftDown())
+				SelectedSegments.Empty();
+
+			if (!SelectedSegments.Contains(Selection))
+			{
+				//GetToolKit()->SelectTileSegment(Selection);
+				SelectedSegments.Emplace(Selection);
+			}
+		}
+		return true;
+	}
+	SelectedSegments.Empty();
+	return FDungeoneerTool::HandleClick(InViewportClient, HitProxy, Click);
 }
 
 TSharedPtr<SCompoundWidget> FDungeoneerSelectTool::GenerateToolPanel()

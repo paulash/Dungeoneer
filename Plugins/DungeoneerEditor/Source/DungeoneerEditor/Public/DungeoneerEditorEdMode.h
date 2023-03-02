@@ -52,7 +52,6 @@ public:
 	bool usingTool = false;
 	ADungeon* LevelDungeon = NULL;
 	FName SelectedTemplate = NAME_None;
-	TSet<FIntVector4> SelectedSegments;
 
 	FDungeoneerTool* CurrentTool;
 
