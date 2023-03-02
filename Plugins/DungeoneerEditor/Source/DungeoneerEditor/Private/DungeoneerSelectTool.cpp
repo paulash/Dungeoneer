@@ -4,10 +4,9 @@
 #include "DungeoneerSelectWidget.h"
 #include "Materials/MaterialInstanceDynamic.h"
 
-void FDungeoneerSelectTool::DrawHUD(FEditorViewportClient* ViewportClient, FViewport* Viewport, const FSceneView* View,
-	FCanvas* Canvas)
+FDungeoneerSelectTool::FDungeoneerSelectTool(FDungeoneerEditorEdMode* _Mode) : FDungeoneerTool(_Mode)
 {
-	Canvas->DrawShadowedText(10, 130, FText::FromString("Select Tool Active!"), GEditor->EditorFont, FLinearColor::Red);
+	PanelWidget = SNew(SDungeoneerSelectWidget);
 }
 
 void FDungeoneerSelectTool::Render(const FSceneView* View, FViewport* Viewport, FPrimitiveDrawInterface* PDI)
@@ -98,23 +97,21 @@ bool FDungeoneerSelectTool::HandleClick(FEditorViewportClient* InViewportClient,
 				SegmentProxy->TilePoint.Y,
 				SegmentProxy->TilePoint.Z,
 				(int)SegmentProxy->Segment);
+
+			if (SelectedSegments.Contains(Selection) && Click.IsShiftDown())
+			{
+				SelectedSegments.Remove(Selection);
+				return true;
+			}
 			
 			if (!Click.IsShiftDown())
 				SelectedSegments.Empty();
-
+			
 			if (!SelectedSegments.Contains(Selection))
-			{
-				//GetToolKit()->SelectTileSegment(Selection);
 				SelectedSegments.Emplace(Selection);
-			}
 		}
 		return true;
 	}
 	SelectedSegments.Empty();
 	return FDungeoneerTool::HandleClick(InViewportClient, HitProxy, Click);
-}
-
-TSharedPtr<SCompoundWidget> FDungeoneerSelectTool::GenerateToolPanel()
-{
-	return SNew(SDungeoneerSelectWidget);
 }

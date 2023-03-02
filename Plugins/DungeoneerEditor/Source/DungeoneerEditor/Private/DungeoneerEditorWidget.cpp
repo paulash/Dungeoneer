@@ -23,7 +23,7 @@ FDungeoneerEditorEdMode* SDungeoneerEditorWidget::GetEdMode() const
 
 void SDungeoneerEditorWidget::OnCurrentToolChange()
 {
-	TSharedPtr<SCompoundWidget> toolWidget = GetEdMode()->CurrentTool->GenerateToolPanel();
+	TSharedPtr<SCompoundWidget> toolWidget = GetEdMode()->CurrentTool->GetToolPanelWidget();
 	if (toolWidget)
 	{
 		InnerBorder.ToSharedRef()->SetContent(toolWidget.ToSharedRef());	

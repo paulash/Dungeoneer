@@ -14,14 +14,6 @@ const FEditorModeID FDungeoneerEditorEdMode::EM_DungeoneerEditorEdModeId = TEXT(
 FDungeoneerEditorEdMode::FDungeoneerEditorEdMode()
 {
 	Tools.Empty();
-
-	auto Tool_Select = MakeUnique<FDungeoneerSelectTool>(this);
-	Tools.Emplace(MoveTemp(Tool_Select));
-
-	auto Tool_Paint = MakeUnique<FDungeoneerPaintTool>(this);
-	Tools.Emplace(MoveTemp(Tool_Paint));
-	
-	CurrentTool = Tools[0].Get();
 }
 
 FDungeoneerEditorEdMode::~FDungeoneerEditorEdMode()
@@ -72,7 +64,18 @@ void FDungeoneerEditorEdMode::Enter()
 		Toolkit = MakeShareable(new FDungeoneerEditorEdModeToolkit);
 		Toolkit->Init(Owner->GetToolkitHost());
 	}
-	SetCurrentTool(CurrentTool->GetToolName());
+
+	if (Tools.Num() == 0)
+	{
+		auto Tool_Select = MakeUnique<FDungeoneerSelectTool>(this);
+		Tools.Emplace(MoveTemp(Tool_Select));
+
+		auto Tool_Paint = MakeUnique<FDungeoneerPaintTool>(this);
+		Tools.Emplace(MoveTemp(Tool_Paint));
+	
+		CurrentTool = Tools[0].Get();
+	}
+	SetCurrentTool(CurrentTool->GetToolName());	
 }
 
 void FDungeoneerEditorEdMode::Exit()

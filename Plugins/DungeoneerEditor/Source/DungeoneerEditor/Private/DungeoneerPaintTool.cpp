@@ -1,8 +1,7 @@
 #include "DungeoneerPaintTool.h"
-
 #include "DungeoneerTemplateWidget.h"
 
-TSharedPtr<SCompoundWidget> FDungeoneerPaintTool::GenerateToolPanel()
+FDungeoneerPaintTool::FDungeoneerPaintTool(FDungeoneerEditorEdMode* _Mode) : FDungeoneerTool(_Mode)
 {
-	return SNew(SDungeoneerTemplateWidget);
+	PanelWidget = SNew(SDungeoneerTemplateWidget);
 }
