@@ -6,6 +6,7 @@
 #include "EdMode.h"
 #include "Dungeon.h"
 #include "DungeoneerTool.h"
+#include "Delegates/DelegateSignatureImpl.inl"
 
 struct HDungeonSegmentProxy : public HHitProxy
 {
@@ -19,11 +20,12 @@ struct HDungeonSegmentProxy : public HHitProxy
 	EDungeonDirection Segment;
 };
 
-
 class FDungeoneerEditorEdMode : public FEdMode
 {
 public:
 	const static FEditorModeID EM_DungeoneerEditorEdModeId;
+
+	
 public:
 	FDungeoneerEditorEdMode();
 	virtual ~FDungeoneerEditorEdMode();

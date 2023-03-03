@@ -75,7 +75,7 @@ void FDungeoneerEditorEdMode::Enter()
 	
 		CurrentTool = Tools[0].Get();
 	}
-	SetCurrentTool(CurrentTool->GetToolName());	
+	SetCurrentTool(CurrentTool->GetToolName());
 }
 
 void FDungeoneerEditorEdMode::Exit()

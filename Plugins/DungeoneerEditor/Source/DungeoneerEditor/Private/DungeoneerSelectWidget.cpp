@@ -6,18 +6,36 @@
 
 void SDungeoneerSelectWidget::Construct(const FArguments& InArgs)
 {
+	/*
 	FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
 
 	FDetailsViewArgs args;
 	args.bAllowSearch = false;
 	args.bShowActorLabel = false;
 	args.bAllowMultipleTopLevelObjects = false;
-	
-	FStructOnScope* ScopeDungeonPalette = new FStructOnScope(FDungeonModel::StaticStruct(), NULL);
+
+	FIntVector tilePoint = FIntVector(0,0,0);
+	FStructOnScope* ScopeDungeonPalette = new FStructOnScope(FDungeonTile::StaticStruct(), NULL);
+	SelectionDetails = PropertyEditorModule.CreateStructureDetailView(
+		args,
+		FStructureDetailsViewArgs(),
+		MakeShareable(ScopeDungeonPalette),
+		FText::FromString("Dungeon Tile")
+	);
+	*/
+
+	/*
+	(uint8*)&GetEdMode()->LevelDungeon->Tiles[tilePoint]
+	FStructOnScope* ScopeDungeonPalette = new FStructOnScope(FDungeonModel::StaticStruct(),
+		(uint8*)&GetEdMode()->LevelDungeon->DungeonPalette.Models[GetEdMode()->SelectedTemplate]);
+	SelectionDetails->SetStructureData(MakeShareable(ScopeDungeonPalette));
+	*/
+
+	SNew(SComboBox<TSharedPtr<FString>>);
 	
 	ChildSlot
 	[
-		SNew(STextBlock).Text(FText::FromString("Selection Tool."))
+		SelectionDetails->GetWidget().ToSharedRef()
 	];
 }
 

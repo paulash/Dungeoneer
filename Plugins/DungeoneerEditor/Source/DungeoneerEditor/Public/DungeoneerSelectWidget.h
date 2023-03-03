@@ -14,4 +14,8 @@ public:
 
 	// Util Functions
 	class FDungeoneerEditorEdMode* GetEdMode() const;
+
+private:
+	
+	TSharedPtr<IStructureDetailsView> SelectionDetails;
 };
