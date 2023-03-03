@@ -35,7 +35,7 @@ void SDungeoneerSelectWidget::Construct(const FArguments& InArgs)
 	
 	ChildSlot
 	[
-		SelectionDetails->GetWidget().ToSharedRef()
+		SNew(STextBlock).Text(FText::FromString("woot select."))//SelectionDetails->GetWidget().ToSharedRef()
 	];
 }
 
