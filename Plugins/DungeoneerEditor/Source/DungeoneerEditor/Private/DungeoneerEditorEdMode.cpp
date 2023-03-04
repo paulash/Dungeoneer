@@ -152,8 +152,12 @@ void FDungeoneerEditorEdMode::SetCurrentTool(FName _ToolName)
 			}
 			return;
 		}
-	}
-	
+	}	
+}
+
+FDungeoneerEditorEdMode* FDungeoneerEditorEdMode::GetEdMode()
+{
+	return (FDungeoneerEditorEdMode*)GLevelEditorModeTools().GetActiveMode(FDungeoneerEditorEdMode::EM_DungeoneerEditorEdModeId);
 }
 
 

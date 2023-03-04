@@ -111,6 +111,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnRefreshTile, ADungeon*, Dungeon,
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTileTagsChanged, ADungeon*, Dungeon, FIntVector, TilePoint);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGenerated, ADungeon*, Dungeon);
 
+
 UCLASS(BlueprintType, NotBlueprintable)
 class DUNGEONEERGAME_API ADungeon final : public AActor
 {
@@ -226,6 +227,36 @@ public:
 	}
 	
 	void RegenerateTiles();
+
+	bool AddTemplate(FName TemplateName, FDungeonModel Template)
+	{
+		if (DungeonPalette.Models.Contains(TemplateName)) return false;
+		DungeonPalette.Models.Emplace(TemplateName, Template);
+		RegenerateTiles();
+		return true;
+	};
+
+	bool RemoveTemplate(FName TemplateName)
+	{
+		if (!DungeonPalette.Models.Contains(TemplateName)) return false;
+		DungeonPalette.Models.Remove(TemplateName);
+		RegenerateTiles();
+		return true;
+	};
+
+	bool RenameTemplate(FName OldTemplateName, FName NewTemplateName)
+	{
+		if (!DungeonPalette.Models.Contains(OldTemplateName)) return false;
+		if (DungeonPalette.Models.Contains(NewTemplateName)) return false;
+		FDungeonModel _template = DungeonPalette.Models[OldTemplateName];
+		
+		RemoveTemplate(OldTemplateName);
+		AddTemplate(NewTemplateName, _template);
+
+		//TODO: step all the tiles, and rename the references to the old template, to the new template.
+		RegenerateTiles();
+		return true;
+	};
 
 private:
 

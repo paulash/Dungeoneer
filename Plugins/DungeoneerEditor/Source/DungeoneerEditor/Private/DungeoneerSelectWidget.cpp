@@ -38,8 +38,3 @@ void SDungeoneerSelectWidget::Construct(const FArguments& InArgs)
 		SNew(STextBlock).Text(FText::FromString("woot select."))//SelectionDetails->GetWidget().ToSharedRef()
 	];
 }
-
-FDungeoneerEditorEdMode* SDungeoneerSelectWidget::GetEdMode() const
-{
-	return (FDungeoneerEditorEdMode*)GLevelEditorModeTools().GetActiveMode(FDungeoneerEditorEdMode::EM_DungeoneerEditorEdModeId);
-}

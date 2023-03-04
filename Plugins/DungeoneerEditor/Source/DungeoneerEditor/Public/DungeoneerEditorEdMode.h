@@ -20,11 +20,21 @@ struct HDungeonSegmentProxy : public HHitProxy
 	EDungeonDirection Segment;
 };
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnTemplateAdded, FName /*, TemplateName*/);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnTemplateRemoved, FName/*, TemplateName*/);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnTemplateRenamed, FName/*, OldTemplateName*/, FName);
+DECLARE_MULTICAST_DELEGATE(FOnTemplateUpdated);
+
 class FDungeoneerEditorEdMode : public FEdMode
 {
 public:
 	const static FEditorModeID EM_DungeoneerEditorEdModeId;
 
+	FOnTemplateAdded OnTemplateAdded;
+	FOnTemplateRemoved OnTemplateRemoved;
+	FOnTemplateRenamed OnTemplateRenamed;
+
+	FOnTemplateUpdated OnTemplateUpdated;
 	
 public:
 	FDungeoneerEditorEdMode();
@@ -58,8 +68,45 @@ public:
 	FDungeoneerTool* CurrentTool;
 
 	void SetCurrentTool(FName _ToolName);
-	
-private:
+
+	// Util Functions
+	static class FDungeoneerEditorEdMode* GetEdMode();
+
+
+	bool AddTemplate(FName _TemplateName, FDungeonModel _Template)
+	{
+		if (!LevelDungeon) return false;
+		if (!LevelDungeon->AddTemplate(_TemplateName, _Template)) return false;
+		OnTemplateAdded.Broadcast(_TemplateName);
+		OnTemplateUpdated.Broadcast();
+		return true;
+	}
+
+	bool RemoveTemplate(FName _TemplateName)
+	{
+		if (!LevelDungeon) return false;
+		if (!LevelDungeon->RemoveTemplate(_TemplateName)) return false;
+		if (SelectedTemplate == _TemplateName)
+			SelectedTemplate = NAME_None;
+		
+		OnTemplateRemoved.Broadcast(_TemplateName);
+		OnTemplateUpdated.Broadcast();
+		return true;
+	}
+
+	bool RenameTemplate(FName _OldTemplateName, FName _NewTemplateName)
+	{
+		if (!LevelDungeon) return false;
+		if (!LevelDungeon->RenameTemplate(_OldTemplateName, _NewTemplateName)) return false;
+		if (SelectedTemplate == _OldTemplateName)
+			SelectedTemplate = _NewTemplateName;
+		
+		OnTemplateRenamed.Broadcast(_OldTemplateName, _NewTemplateName);
+		OnTemplateUpdated.Broadcast();
+		return true;
+	}
+
+	private:
 	
 	TArray<TUniquePtr<FDungeoneerTool>> Tools;
 };

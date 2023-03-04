@@ -12,9 +12,6 @@ public:
 
 	void Construct(const FArguments& InArgs);
 
-	// Util Functions
-	class FDungeoneerEditorEdMode* GetEdMode() const;
-
 private:
 	
 	TSharedPtr<IStructureDetailsView> SelectionDetails;

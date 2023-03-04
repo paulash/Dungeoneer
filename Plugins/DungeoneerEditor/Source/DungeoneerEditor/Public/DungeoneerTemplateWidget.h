@@ -12,9 +12,6 @@ public:
 
 	void Construct(const FArguments& InArgs);
 
-	// Util Functions
-	class FDungeoneerEditorEdMode* GetEdMode() const;
-
 private:
 
 	TSharedRef<ITableRow> OnGenerateRowForTemplateList(TSharedPtr<FString> Item, const TSharedRef<STableViewBase>& OwnerTable)
@@ -39,13 +36,13 @@ private:
 
 	TSharedPtr<SEditableText> TemplateNameField;
 
-	FReply AddModel();
-	FReply RemoveModel();
+	FReply AddTemplate();
+	FReply RemoveTemplate();
 
 	void OnTemplateNameCommit(const FText& text, ETextCommit::Type type);
 
 	EVisibility IsTemplateValid() const
 	{
-		return (GetEdMode()->SelectedTemplate != NAME_None) ? EVisibility::Visible : EVisibility::Collapsed;
+		return (FDungeoneerEditorEdMode::GetEdMode()->SelectedTemplate != NAME_None) ? EVisibility::Visible : EVisibility::Collapsed;
 	}
 };

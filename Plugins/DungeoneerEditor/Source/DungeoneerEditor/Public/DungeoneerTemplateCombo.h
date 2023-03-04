@@ -9,30 +9,7 @@ public:
 
 	typedef TSharedPtr<FString> FComboItemType;
 	
-	void Construct(const FArguments& InArgs)
-	{
-		/*
-		Options.Add(MakeShareable(new FString("Option1")));
-		Options.Add(MakeShareable(new FString("Option2")));
-		Options.Add(MakeShareable(new FString("LastOption")));
-		*/
-
-		Options.Add(MakeShareable(new FString("")));
-		CurrentItem = Options[0];
-
-		ChildSlot
-			[
-				SNew(SComboBox<FComboItemType>)
-				.OptionsSource(&Options)
-				.OnSelectionChanged(this, &SDungeoneerTemplateCombo::OnSelectionChanged)
-				.OnGenerateWidget(this, &SDungeoneerTemplateCombo::MakeWidgetForOption)
-				.InitiallySelectedItem(CurrentItem)
-				[
-					SNew(STextBlock)
-					.Text(this, &SDungeoneerTemplateCombo::GetCurrentItemLabel)
-				]
-			];
-	}
+	void Construct(const FArguments& InArgs);
 
 	TSharedRef<SWidget> MakeWidgetForOption(FComboItemType InOption)
 	{
@@ -54,8 +31,12 @@ public:
 		return LOCTEXT("InvalidComboEntryText", "<<Invalid option>>");
 	}
 
+protected:
+	void RefreshTemplates();
+
 	FComboItemType CurrentItem;
 	TArray<FComboItemType> Options;
+	
 };
 
 #undef LOCTEXT_NAMESPACE
