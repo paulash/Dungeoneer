@@ -63,7 +63,6 @@ public:
 
 	bool usingTool = false;
 	ADungeon* LevelDungeon = NULL;
-	FName SelectedTemplate = NAME_None;
 
 	FDungeoneerTool* CurrentTool;
 
@@ -86,8 +85,6 @@ public:
 	{
 		if (!LevelDungeon) return false;
 		if (!LevelDungeon->RemoveTemplate(_TemplateName)) return false;
-		if (SelectedTemplate == _TemplateName)
-			SelectedTemplate = NAME_None;
 		
 		OnTemplateRemoved.Broadcast(_TemplateName);
 		OnTemplateUpdated.Broadcast();
@@ -98,8 +95,6 @@ public:
 	{
 		if (!LevelDungeon) return false;
 		if (!LevelDungeon->RenameTemplate(_OldTemplateName, _NewTemplateName)) return false;
-		if (SelectedTemplate == _OldTemplateName)
-			SelectedTemplate = _NewTemplateName;
 		
 		OnTemplateRenamed.Broadcast(_OldTemplateName, _NewTemplateName);
 		OnTemplateUpdated.Broadcast();

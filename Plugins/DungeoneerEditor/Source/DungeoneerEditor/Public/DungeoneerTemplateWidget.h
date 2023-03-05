@@ -27,7 +27,7 @@ private:
 	
 	TSharedPtr<SListView<TSharedPtr<FString>>> TemplateList;
 	TArray<TSharedPtr<FString>> TemplateNames;
-	FName SelectedTemplateName = NAME_None;
+	FName SelectedTemplate = NAME_None;
 	
 	void RefreshTemplateList();
 	void OnFinishDetails(const FPropertyChangedEvent& evt);

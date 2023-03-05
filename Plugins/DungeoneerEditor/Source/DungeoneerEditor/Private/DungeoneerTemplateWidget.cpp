@@ -109,13 +109,11 @@ void SDungeoneerTemplateWidget::OnSelectTemplateList(TSharedPtr<FString> Item, E
 	{
 		ModelDetails->SetStructureData(NULL);
 		TemplateNameField->SetText(FText::FromString(""));
-		FDungeoneerEditorEdMode::GetEdMode()->SelectedTemplate = NAME_None;
+		SelectedTemplate = NAME_None;
 		return;
 	}
-	FDungeoneerEditorEdMode::GetEdMode()->SelectedTemplate = FName(*Item);
-	SelectedTemplateName = FDungeoneerEditorEdMode::GetEdMode()->SelectedTemplate;
-
-	TemplateNameField->SetText(FText::FromString(SelectedTemplateName.ToString()));
+	SelectedTemplate = FName(*Item);
+	TemplateNameField->SetText(FText::FromString(SelectedTemplate.ToString()));
 
 	FStructOnScope* ScopeDungeonPalette = new FStructOnScope(FDungeonModel::StaticStruct(),
 		(uint8*)&FDungeoneerEditorEdMode::GetEdMode()->LevelDungeon->DungeonPalette.Models[FDungeoneerEditorEdMode::GetEdMode()->SelectedTemplate]);
@@ -139,12 +137,12 @@ void SDungeoneerTemplateWidget::RefreshTemplateList()
 	TemplateList->ReGenerateItems(TemplateList->GetCachedGeometry());
 
 	// reselect the selected template.
-	if (FDungeoneerEditorEdMode::GetEdMode()->SelectedTemplate != NAME_None)
+	if (SelectedTemplate != NAME_None)
 	{
 		for (int i=0; i < TemplateNames.Num(); i++)
 		{
 			FName checkName = FName(*TemplateNames[i]);
-			if (checkName == FDungeoneerEditorEdMode::GetEdMode()->SelectedTemplate)
+			if (checkName == SelectedTemplate)
 			{
 				TemplateList->SetSelection(TemplateNames[i]);
 				break;
@@ -167,9 +165,9 @@ FReply SDungeoneerTemplateWidget::AddTemplate()
 
 FReply SDungeoneerTemplateWidget::RemoveTemplate()
 {
-	if (FDungeoneerEditorEdMode::GetEdMode()->SelectedTemplate != NAME_None)
+	if (SelectedTemplate != NAME_None)
 	{
-		FDungeoneerEditorEdMode::GetEdMode()->RemoveTemplate(FDungeoneerEditorEdMode::GetEdMode()->SelectedTemplate);
+		FDungeoneerEditorEdMode::GetEdMode()->RemoveTemplate(SelectedTemplate);
 		TemplateList->SetSelection(NULL);	
 	}
 	return FReply::Handled();
@@ -177,10 +175,8 @@ FReply SDungeoneerTemplateWidget::RemoveTemplate()
 
 void SDungeoneerTemplateWidget::OnTemplateNameCommit(const FText& text, ETextCommit::Type type)
 {
-	if (FDungeoneerEditorEdMode::GetEdMode()->SelectedTemplate != NAME_None)
+	if (SelectedTemplate != NAME_None)
 	{
-		FDungeoneerEditorEdMode::GetEdMode()->RenameTemplate(
-			FDungeoneerEditorEdMode::GetEdMode()->SelectedTemplate,
-			FName(text.ToString()));
+		FDungeoneerEditorEdMode::GetEdMode()->RenameTemplate(SelectedTemplate,FName(text.ToString()));
 	}
 }
