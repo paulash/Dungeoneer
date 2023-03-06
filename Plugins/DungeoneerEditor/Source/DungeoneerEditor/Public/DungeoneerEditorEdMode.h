@@ -104,8 +104,10 @@ public:
 		return true;
 	}
 
-	bool AddTile(FIntVector TilePoint, TArray<FName> SegmentTemplates)
+	bool AddTile(FIntVector TilePoint)
 	{
+		if (!LevelDungeon) return false;
+		LevelDungeon->CreateTile(TilePoint);
 		return true;
 	}
 

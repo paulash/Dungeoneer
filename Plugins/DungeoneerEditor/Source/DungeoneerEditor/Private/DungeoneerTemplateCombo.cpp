@@ -20,9 +20,9 @@ void SDungeoneerTemplateCombo::Construct(const FArguments& InArgs)
 	CurrentItem = Options[0];
 	
 	ChildSlot
-		[
-			ComboBox.ToSharedRef()
-		];
+	[
+		ComboBox.ToSharedRef()
+	];
 }
 
 void SDungeoneerTemplateCombo::OnSelectionChanged(FComboItemType NewValue, ESelectInfo::Type)
