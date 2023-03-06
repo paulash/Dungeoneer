@@ -16,10 +16,7 @@ public:
 		return SNew(STextBlock).Text(FText::FromString(*InOption));
 	}
 
-	void OnSelectionChanged(FComboItemType NewValue, ESelectInfo::Type)
-	{
-		CurrentItem = NewValue;
-	}
+	void OnSelectionChanged(FComboItemType NewValue, ESelectInfo::Type);
 
 	FText GetCurrentItemLabel() const
 	{
@@ -32,10 +29,26 @@ public:
 	}
 
 protected:
+
+	void OnTemplateAdded(FName NewTemplate)
+	{
+		RefreshTemplates();
+	}
+	void OnTemplateRemoved(FName RemovedTemplate)
+	{
+		RefreshTemplates();
+	}
+	void OnTemplateRenamed(FName OldTemplate, FName NewTemplate)
+	{
+		RefreshTemplates();
+	}
+	
 	void RefreshTemplates();
 
 	FComboItemType CurrentItem;
 	TArray<FComboItemType> Options;
+
+	TSharedPtr<SComboBox<FComboItemType>> ComboBox;
 	
 };
 

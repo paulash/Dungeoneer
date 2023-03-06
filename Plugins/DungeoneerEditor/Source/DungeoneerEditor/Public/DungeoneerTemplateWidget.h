@@ -28,6 +28,24 @@ private:
 	TSharedPtr<SListView<TSharedPtr<FString>>> TemplateList;
 	TArray<TSharedPtr<FString>> TemplateNames;
 	FName SelectedTemplate = NAME_None;
+
+	void OnTemplateAdded(FName NewTemplate)
+	{
+		SelectedTemplate = NewTemplate;
+		RefreshTemplateList();	
+	};
+	void OnTemplateRemoved(FName RemovedTemplate)
+	{
+		if (SelectedTemplate == RemovedTemplate)
+			SelectedTemplate = NAME_None;
+		RefreshTemplateList();	
+	};
+	void OnTemplateRenamed(FName OldTemplateName, FName NewTemplateName)
+	{
+		if (SelectedTemplate == OldTemplateName)
+			SelectedTemplate = NewTemplateName;
+		RefreshTemplateList();
+	}
 	
 	void RefreshTemplateList();
 	void OnFinishDetails(const FPropertyChangedEvent& evt);
@@ -43,6 +61,6 @@ private:
 
 	EVisibility IsTemplateValid() const
 	{
-		return (FDungeoneerEditorEdMode::GetEdMode()->SelectedTemplate != NAME_None) ? EVisibility::Visible : EVisibility::Collapsed;
+		return (SelectedTemplate != NAME_None) ? EVisibility::Visible : EVisibility::Collapsed;
 	}
 };

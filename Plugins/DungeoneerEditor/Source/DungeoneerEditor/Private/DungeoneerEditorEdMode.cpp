@@ -6,7 +6,7 @@
 #include "EditorModeManager.h"
 #include "EngineUtils.h"
 #include "Materials/MaterialInstanceDynamic.h"
-#include "DungeoneerSelectTool.h"
+#include "DungeoneerTileEditTool.h"
 
 IMPLEMENT_HIT_PROXY(HDungeonSegmentProxy, HHitProxy);
 const FEditorModeID FDungeoneerEditorEdMode::EM_DungeoneerEditorEdModeId = TEXT("EM_DungeoneerEditorEdMode");
@@ -67,7 +67,7 @@ void FDungeoneerEditorEdMode::Enter()
 
 	if (Tools.Num() == 0)
 	{
-		auto Tool_Select = MakeUnique<FDungeoneerSelectTool>(this);
+		auto Tool_Select = MakeUnique<FDungeoneerTileEditTool>(this);
 		Tools.Emplace(MoveTemp(Tool_Select));
 
 		auto Tool_Paint = MakeUnique<FDungeoneerPaintTool>(this);
@@ -159,7 +159,3 @@ FDungeoneerEditorEdMode* FDungeoneerEditorEdMode::GetEdMode()
 {
 	return (FDungeoneerEditorEdMode*)GLevelEditorModeTools().GetActiveMode(FDungeoneerEditorEdMode::EM_DungeoneerEditorEdModeId);
 }
-
-
-
-

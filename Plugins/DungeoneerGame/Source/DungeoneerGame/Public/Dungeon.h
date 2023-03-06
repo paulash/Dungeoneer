@@ -45,6 +45,26 @@ const static TArray<FIntVector> DUNGEON_DIRECTIONS = {
 };
 
 USTRUCT()
+struct FDungeonBatchedInstance
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY()
+	TArray<FTransform> Transforms;
+
+	UPROPERTY()
+	TArray<FIntVector> TilePoints;
+
+	// if this is a negative value, its a custom model index.
+	// if its positive, its a direction and normal segment.
+	UPROPERTY()
+	TArray<int> Segments;
+	
+};
+
+USTRUCT()
 struct FDungeonModel
 {
 	GENERATED_BODY()
@@ -59,12 +79,15 @@ public:
 };
 
 USTRUCT()
-struct FDungeonCustomModel
+struct FDungeonCustomModelInstance
 {
 	GENERATED_BODY()
 
 public:
 
+	UPROPERTY(EditAnywhere)
+	FString UUID;
+	
 	UPROPERTY(EditAnywhere)
 	FName TemplateName;
 
@@ -83,7 +106,7 @@ public:
 	TArray<FName> SegmentModels;
 
 	UPROPERTY(EditAnywhere)
-	TArray<FDungeonCustomModel> CustomModels;
+	TArray<FDungeonCustomModelInstance> CustomModelInstances;
 
 	UPROPERTY(EditAnywhere)
 	FGameplayTagContainer Tags;
@@ -258,11 +281,32 @@ public:
 		return true;
 	};
 
+	bool GetHitInfo(const HInstancedStaticMeshInstance* hitProxy, FIntVector& TilePoint, EDungeonDirection& Direction, int& CustomModelIndex)
+	{
+		if (!ISMCValues.Contains(hitProxy->Component)) return false; 
+		
+		TilePoint = FIntVector(
+				hitProxy->Component->PerInstanceSMCustomData[(hitProxy->InstanceIndex * 4)],
+				hitProxy->Component->PerInstanceSMCustomData[(hitProxy->InstanceIndex * 4) + 1],
+				hitProxy->Component->PerInstanceSMCustomData[(hitProxy->InstanceIndex * 4) + 2]
+		);
+
+		CustomModelIndex = -1;
+		Direction = EDungeonDirection::NORTH;
+		
+		int segment = hitProxy->Component->PerInstanceSMCustomData[(hitProxy->InstanceIndex * 4)+3];
+		if (segment >= 0)
+			Direction = (EDungeonDirection)segment;
+		else
+			CustomModelIndex = -segment;
+		return true;
+	}
+	
 private:
 
 	UPROPERTY()
 	UStaticMesh* DungeonQuad;
-	
+
 	UPROPERTY()
 	TMap<FName, UInstancedStaticMeshComponent*> ISMCs;
 

@@ -16,9 +16,11 @@ FDungeoneerEditorCommands::FDungeoneerEditorCommands() : TCommands<FDungeoneerEd
 
 void FDungeoneerEditorCommands::RegisterCommands()
 {
-	UI_COMMAND(SelectTool, "Select", "Select tiles, shift click to multi-select", EUserInterfaceActionType::RadioButton, FInputChord());
-	NameToCommandMap.Add("Tool_Select", SelectTool);
+	UI_COMMAND(SelectTool, "Edit", "Edit tiles, shift click to multi-select", EUserInterfaceActionType::RadioButton, FInputChord());
+	NameToCommandMap.Add("TOOL_EDIT", SelectTool);
 
-	UI_COMMAND(PaintTool, "Paint", "Select tiles, shift click to multi-select", EUserInterfaceActionType::RadioButton, FInputChord());
-	NameToCommandMap.Add("Tool_Paint", PaintTool);
+	UI_COMMAND(PaintTool, "Paint", "Paint tiles, shift click to add tiles, ctrl to delete.", EUserInterfaceActionType::RadioButton, FInputChord());
+	NameToCommandMap.Add("TOOL_PAINT", PaintTool);
 }
+
+#undef LOCTEXT_NAMESPACE

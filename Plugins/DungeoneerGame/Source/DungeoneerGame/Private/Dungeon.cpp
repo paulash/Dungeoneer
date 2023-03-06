@@ -1,7 +1,7 @@
 #include "Dungeon.h"
 #include "UObject/ConstructorHelpers.h"
 
-//#define LOCTEXT_NAMESPACE "FDungeoneerEdModeToolkit"
+#define LOCTEXT_NAMESPACE "DungeoneerGamePlugin"
 
 ADungeon::ADungeon()
 {
@@ -129,10 +129,11 @@ void ADungeon::RegenerateTiles()
 	{
 		UInstancedStaticMeshComponent* ISMC = Cast<UInstancedStaticMeshComponent>(CurrentISMCs[i]);
 		if (!ISMC) continue;
+		ISMC->bHasPerInstanceHitProxies = true;
 		UnusedISMCs.Add(ISMC);
 	}
 	
-	TMap<FName, TArray<FTransform>> BatchedInstances;
+	TMap<FName, FDungeonBatchedInstance> BatchedInstances;
 	
 	TArray<FIntVector> TilePoints;
 	Tiles.GetKeys(TilePoints);
@@ -148,7 +149,7 @@ void ADungeon::RegenerateTiles()
 				continue;
 
 			if (!BatchedInstances.Contains(Tile.SegmentModels[s]))
-				BatchedInstances.Emplace(Tile.SegmentModels[s], TArray<FTransform>());
+				BatchedInstances.Emplace(Tile.SegmentModels[s], FDungeonBatchedInstance());
 
 			FTransform Transform = FTransform(
 				DUNGEON_SEGMENT_ROTATIONS[s],
@@ -159,25 +160,29 @@ void ADungeon::RegenerateTiles()
 				FVector(Scale/100 + 0.001f, Scale/100 + 0.001f, Scale/100 + 0.001f));
 
 			FDungeonModel Model = DungeonPalette.Models.FindRef(Tile.SegmentModels[s]);
-			BatchedInstances[Tile.SegmentModels[s]].Emplace(Transform);
+			BatchedInstances[Tile.SegmentModels[s]].Transforms.Emplace(Transform);
+			BatchedInstances[Tile.SegmentModels[s]].TilePoints.Emplace(TilePoints[i]);
+			BatchedInstances[Tile.SegmentModels[s]].Segments.Emplace(s);
 		}
 
-		// add all the custom tiles to the batch.
-		for (int c=0; c < Tile.CustomModels.Num(); c++)
+		// add all the custom models to the batch.
+		for (int c=0; c < Tile.CustomModelInstances.Num(); c++)
 		{
 			FTransform Transform = FTransform(
-				Tile.CustomModels[c].Offset.GetRotation(),
+				Tile.CustomModelInstances[c].Offset.GetRotation(),
 				FVector(
 					TilePoints[i].X * Scale,
 					TilePoints[i].Y * Scale,
-					TilePoints[i].Z * Scale + (Scale/2)) + Tile.CustomModels[c].Offset.GetLocation(),
-					Tile.CustomModels[c].Offset.GetScale3D());
+					TilePoints[i].Z * Scale + (Scale/2)) + Tile.CustomModelInstances[c].Offset.GetLocation(),
+					Tile.CustomModelInstances[c].Offset.GetScale3D());
 
-			if (!BatchedInstances.Contains(Tile.CustomModels[c].TemplateName))
-				BatchedInstances.Emplace(Tile.CustomModels[c].TemplateName, TArray<FTransform>());
+			if (!BatchedInstances.Contains(Tile.CustomModelInstances[c].TemplateName))
+				BatchedInstances.Emplace(Tile.CustomModelInstances[c].TemplateName, FDungeonBatchedInstance());
 
-			FDungeonModel Model = DungeonPalette.Models.FindRef(Tile.CustomModels[c].TemplateName);
-			BatchedInstances[Tile.CustomModels[c].TemplateName].Emplace(Transform);
+			FDungeonModel Model = DungeonPalette.Models.FindRef(Tile.CustomModelInstances[c].TemplateName);
+			BatchedInstances[Tile.CustomModelInstances[c].TemplateName].Transforms.Emplace(Transform);
+			BatchedInstances[Tile.CustomModelInstances[c].TemplateName].TilePoints.Emplace(TilePoints[i]);
+			BatchedInstances[Tile.CustomModelInstances[c].TemplateName].Segments.Emplace(-c);
 		}
 		OnRefreshTile.Broadcast(this, TilePoints[i]);
 	}
@@ -187,11 +192,22 @@ void ADungeon::RegenerateTiles()
 	BatchedInstances.GetKeys(Templates);
 	for (int i=0; i < Templates.Num(); i++)
 	{
-		TArray<FTransform> Transforms = BatchedInstances[Templates[i]];
+		FDungeonBatchedInstance instance = BatchedInstances[Templates[i]];
 		UInstancedStaticMeshComponent* ISMC = GetInstancedMeshComponent(Templates[i]);
 		if (!ISMC) continue;
 		ISMC->ClearInstances();
-		ISMC->AddInstances(Transforms, false);
+		ISMC->AddInstances(instance.Transforms, false);
+
+		// pack in custom data that represents the tile point and segment type.
+		for (int e=0; e < instance.Transforms.Num(); e++)
+		{
+			ISMC->SetCustomData(e, {
+				(float)instance.TilePoints[e].X,
+				(float)instance.TilePoints[e].Y,
+				(float)instance.TilePoints[e].Z,
+				(float)instance.Segments[e]
+			});
+		}
 
 		// was used, so now its not unused.
 		UnusedISMCs.Remove(ISMC);
@@ -225,7 +241,6 @@ void ADungeon::RegenerateTiles()
 				ISMC->SetMaterial(m, Template.Materials[m]);
 		}
 	}
-	
 	OnGenerated.Broadcast(this);
 }
 
@@ -237,7 +252,9 @@ UInstancedStaticMeshComponent* ADungeon::GetInstancedMeshComponent(FName Templat
 	if (!ISMC)
 	{
 		ISMC = NewObject<UInstancedStaticMeshComponent>(this);
-		ISMC->NumCustomDataFloats = 4; // X,Y,Z,SEGMENT
+		ISMC->bHasPerInstanceHitProxies = true;
+		ISMC->NumCustomDataFloats = 4; // X,Y,Z,SEGMENT, if segment is negative, its a custom model index. remove the neg.
+		ISMC->HitProxyPriority = EHitProxyPriority::HPP_UI;
 		AddInstanceComponent(ISMC);
 		ISMC->RegisterComponent();
 		ISMC->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
@@ -251,3 +268,5 @@ UInstancedStaticMeshComponent* ADungeon::GetInstancedMeshComponent(FName Templat
 	}
 	return ISMC;
 }
+
+#undef LOCTEXT

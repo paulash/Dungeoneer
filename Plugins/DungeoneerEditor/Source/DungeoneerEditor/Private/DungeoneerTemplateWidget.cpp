@@ -4,7 +4,7 @@
 #include "Widgets/Layout/SScrollBox.h"
 #include "EditorModeManager.h"
 
-#define LOCTEXT_NAMESPACE "FDungeoneerEditorModule"
+#define LOCTEXT_NAMESPACE "DungeoneerTemplateWidget"
 
 void SDungeoneerTemplateWidget::Construct(const FArguments& InArgs)
 {
@@ -29,8 +29,11 @@ void SDungeoneerTemplateWidget::Construct(const FArguments& InArgs)
 					.OnSelectionChanged(this, &SDungeoneerTemplateWidget::OnSelectTemplateList)
 					.ReturnFocusToSelection(true);
 	RefreshTemplateList();
-	FDungeoneerEditorEdMode::GetEdMode()->OnTemplateUpdated.AddRaw(this, &SDungeoneerTemplateWidget::RefreshTemplateList);
-	
+
+	// hook the template events.
+	FDungeoneerEditorEdMode::GetEdMode()->OnTemplateAdded.AddRaw(this, &SDungeoneerTemplateWidget::OnTemplateAdded);
+	FDungeoneerEditorEdMode::GetEdMode()->OnTemplateRemoved.AddRaw(this, &SDungeoneerTemplateWidget::OnTemplateRemoved);
+	FDungeoneerEditorEdMode::GetEdMode()->OnTemplateRenamed.AddRaw(this, &SDungeoneerTemplateWidget::OnTemplateRenamed);
 
 	TSharedPtr<SButton> AddModel = SNew(SButton)
 									.Text(FText::FromString("Add Template"))
@@ -116,7 +119,7 @@ void SDungeoneerTemplateWidget::OnSelectTemplateList(TSharedPtr<FString> Item, E
 	TemplateNameField->SetText(FText::FromString(SelectedTemplate.ToString()));
 
 	FStructOnScope* ScopeDungeonPalette = new FStructOnScope(FDungeonModel::StaticStruct(),
-		(uint8*)&FDungeoneerEditorEdMode::GetEdMode()->LevelDungeon->DungeonPalette.Models[FDungeoneerEditorEdMode::GetEdMode()->SelectedTemplate]);
+		(uint8*)&FDungeoneerEditorEdMode::GetEdMode()->LevelDungeon->DungeonPalette.Models[SelectedTemplate]);
 	ModelDetails->SetStructureData(MakeShareable(ScopeDungeonPalette));
 }
 
@@ -159,7 +162,8 @@ void SDungeoneerTemplateWidget::OnFinishDetails(const FPropertyChangedEvent& evt
 
 FReply SDungeoneerTemplateWidget::AddTemplate()
 {
-	FDungeoneerEditorEdMode::GetEdMode()->AddTemplate("NEW", FDungeonModel());
+	FString guid = FGuid::NewGuid().ToString(EGuidFormats::Short);
+	FDungeoneerEditorEdMode::GetEdMode()->AddTemplate(FName("NEW_" + guid), FDungeonModel());
 	return FReply::Handled();
 }
 
@@ -167,8 +171,12 @@ FReply SDungeoneerTemplateWidget::RemoveTemplate()
 {
 	if (SelectedTemplate != NAME_None)
 	{
-		FDungeoneerEditorEdMode::GetEdMode()->RemoveTemplate(SelectedTemplate);
-		TemplateList->SetSelection(NULL);	
+		FText msg = LOCTEXT("WARN_REMOVE_TEMPLATE", "Are you sure you wish to remove this template? Any references in tiles will lose there connection.");
+		if (FMessageDialog::Open(EAppMsgType::OkCancel, msg) == EAppReturnType::Ok)
+		{
+			FDungeoneerEditorEdMode::GetEdMode()->RemoveTemplate(SelectedTemplate);
+			TemplateList->SetSelection(NULL);	
+		}
 	}
 	return FReply::Handled();
 }
