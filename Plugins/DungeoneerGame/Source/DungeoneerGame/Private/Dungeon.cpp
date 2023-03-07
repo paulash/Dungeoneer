@@ -152,7 +152,7 @@ void ADungeon::RegenerateTiles()
 				BatchedInstances.Emplace(Tile.SegmentModels[s], FDungeonBatchedInstance());
 
 			FTransform Transform = FTransform(
-				DUNGEON_SEGMENT_ROTATIONS[s],
+				DUNGEON_SEGMENT_ROTATIONS[s] + Tile.SegmentRotation[s],
 				FVector(
 					TilePoints[i].X * Scale,
 					TilePoints[i].Y * Scale,
@@ -177,7 +177,6 @@ void ADungeon::RegenerateTiles()
 		if (!ISMC) continue;
 		ISMC->ClearInstances();
 		ISMC->AddInstances(instance.Transforms, false);
-
 		// pack in custom data that represents the tile point and segment type.
 		for (int e=0; e < instance.Transforms.Num(); e++)
 		{

@@ -23,11 +23,11 @@ public:
 	virtual void GetToolPaletteNames(TArray<FName>& PaletteNames) const override;
 	virtual void OnToolPaletteChanged(FName PaletteName) override;
 
+	TSharedPtr<SDungeoneerEditorWidget> ToolkitWidget;
+	
 private:
 
 	void OnChangeTool(FName _ToolName);
 	bool IsToolEnabled(FName _ToolName) const;
 	bool IsToolActive(FName _ToolName) const;
-
-	TSharedPtr<SDungeoneerEditorWidget> ToolkitWidget;
 };

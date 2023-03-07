@@ -1,5 +1,4 @@
 #include "DungeoneerEditorWidget.h"
-#include "DungeoneerEditor.h"
 #include "DungeoneerEditorEdMode.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Layout/SBorder.h"
@@ -12,8 +11,22 @@ void SDungeoneerEditorWidget::Construct(const FArguments& InArgs)
 		.BorderImage(FEditorStyle::GetBrush(TEXT("Graph.TitleBackground")))
 		.VAlign(VAlign_Fill)
 		.Padding(2);
+	TemplateWidget = SNew(SDungeoneerTemplateWidget);
 	
-	ChildSlot[InnerBorder.ToSharedRef()];
+	ChildSlot
+	[
+		SNew(SVerticalBox)
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			[
+				InnerBorder.ToSharedRef()
+			]
+			+ SVerticalBox::Slot()
+			.FillHeight(1.0)
+			[
+				TemplateWidget.ToSharedRef()
+			]
+	];
 }
 
 FDungeoneerEditorEdMode* SDungeoneerEditorWidget::GetEdMode() const
@@ -32,5 +45,4 @@ void SDungeoneerEditorWidget::OnCurrentToolChange()
 	{
 		InnerBorder.ToSharedRef()->ClearContent();	
 	}
-	
 }

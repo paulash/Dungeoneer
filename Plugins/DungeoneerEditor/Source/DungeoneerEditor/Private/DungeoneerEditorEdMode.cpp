@@ -173,3 +173,10 @@ FDungeoneerEditorEdMode* FDungeoneerEditorEdMode::GetEdMode()
 {
 	return (FDungeoneerEditorEdMode*)GLevelEditorModeTools().GetActiveMode(FDungeoneerEditorEdMode::EM_DungeoneerEditorEdModeId);
 }
+
+FName FDungeoneerEditorEdMode::GetSelectedTemplate()
+{
+	FDungeoneerEditorEdModeToolkit* _toolkit = (FDungeoneerEditorEdModeToolkit*)Toolkit.Get();
+	if (!_toolkit) return NAME_None;
+	return _toolkit->ToolkitWidget->TemplateWidget->GetSelectedTemplate();
+}

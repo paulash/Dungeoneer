@@ -16,9 +16,9 @@ public:
 	
 	void OnCurrentToolChange();
 
-private:
-	
 	TSharedPtr<SDungeoneerTemplateWidget> TemplateWidget;
+	
+private:
 
 	TSharedPtr<SBorder> InnerBorder;
 };

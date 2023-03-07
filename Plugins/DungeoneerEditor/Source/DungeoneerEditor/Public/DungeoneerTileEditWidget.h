@@ -27,5 +27,4 @@ private:
 	TSharedPtr<SDungeoneerTemplateCombo> WestCombo;
 	TSharedPtr<SDungeoneerTemplateCombo> UpCombo;
 	TSharedPtr<SDungeoneerTemplateCombo> DownCombo;
-	TSharedPtr<SDungeoneerTemplateCombo> ModelCombo;
 };

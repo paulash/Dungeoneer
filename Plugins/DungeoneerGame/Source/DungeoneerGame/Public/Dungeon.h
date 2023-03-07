@@ -14,11 +14,10 @@ enum class EDungeonSegment : uint8
 	EAST,
 	WEST,
 	DOWN,
-	UP,
-	MODEL
+	UP
 };
 
-#define DUNGEON_SEGMENT_COUNT 7
+#define DUNGEON_SEGMENT_COUNT 6
 
 const static TArray<FRotator> DUNGEON_SEGMENT_ROTATIONS = {
 	FRotator(180, 90, 90),	// NORTH
@@ -35,7 +34,6 @@ const static TArray<FRotator> DUNGEON_SEGMENT_ROTATIONS = {
 #define WEST_POINT FIntVector(0, -1, 0)
 #define FLOOR_POINT FIntVector(0, 0, -1)
 #define CEILING_POINT FIntVector(0,0, 1)
-#define MODEL_POINT FIntVector(0, 0, 0)
 
 const static TArray<FIntVector> DUNGEON_SEGMENT_OFFSETS = {
 	NORTH_POINT,
@@ -43,8 +41,7 @@ const static TArray<FIntVector> DUNGEON_SEGMENT_OFFSETS = {
 	SOUTH_POINT,
 	WEST_POINT,
 	FLOOR_POINT,
-	CEILING_POINT,
-	MODEL_POINT
+	CEILING_POINT
 };
 
 USTRUCT()
@@ -92,11 +89,15 @@ public:
 	TArray<FName> SegmentModels;
 
 	UPROPERTY(EditAnywhere)
+	TArray<FRotator> SegmentRotation;
+
+	UPROPERTY(EditAnywhere)
 	FGameplayTagContainer Tags;
 
 	FDungeonTile()
 	{
 		SegmentModels.SetNum(DUNGEON_SEGMENT_COUNT);
+		SegmentRotation.SetNum(DUNGEON_SEGMENT_COUNT);
 	}
 };
 
@@ -266,8 +267,8 @@ public:
 
 	bool GetHitInfo(const HInstancedStaticMeshInstance* hitProxy, FIntVector& TilePoint, EDungeonSegment& Direction, int& CustomModelIndex)
 	{
-		if (!ISMCValues.Contains(hitProxy->Component)) return false; 
-		
+		if (!ISMCValues.Contains(hitProxy->Component)) return false;
+		if (hitProxy->Component->IsRenderStateDirty()) return false; // currently rendering.
 		TilePoint = FIntVector(
 				hitProxy->Component->PerInstanceSMCustomData[(hitProxy->InstanceIndex * 4)],
 				hitProxy->Component->PerInstanceSMCustomData[(hitProxy->InstanceIndex * 4) + 1],

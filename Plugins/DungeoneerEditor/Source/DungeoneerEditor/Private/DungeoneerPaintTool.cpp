@@ -1,9 +1,10 @@
 #include "DungeoneerPaintTool.h"
-#include "DungeoneerTemplateWidget.h"
+#include "DungeoneerPaintWidget.h"
+#include "DungeoneerEditorEdMode.h"
 
 FDungeoneerPaintTool::FDungeoneerPaintTool(FDungeoneerEditorEdMode* _Mode) : FDungeoneerTool(_Mode)
 {
-	PanelWidget = SNew(SDungeoneerTemplateWidget);
+	PanelWidget = SNew(SDungeoneerPaintWidget);
 }
 
 void FDungeoneerPaintTool::Render(const FSceneView* View, FViewport* Viewport, FPrimitiveDrawInterface* PDI)
@@ -18,7 +19,7 @@ void FDungeoneerPaintTool::Render(const FSceneView* View, FViewport* Viewport, F
 				HoveredSegment.X * Mode->LevelDungeon->Scale,
 				HoveredSegment.Y * Mode->LevelDungeon->Scale,
 				(HoveredSegment.Z * Mode->LevelDungeon->Scale) + (Mode->LevelDungeon->Scale * 0.5));
-			
+		
 		FVector center = FVector(
 		((DUNGEON_SEGMENT_OFFSETS[HoveredSegment.W].X * 0.5f) * Mode->LevelDungeon->Scale),
 		((DUNGEON_SEGMENT_OFFSETS[HoveredSegment.W].Y * 0.5f) * Mode->LevelDungeon->Scale), 
@@ -33,8 +34,6 @@ void FDungeoneerPaintTool::Render(const FSceneView* View, FViewport* Viewport, F
 								FMath::Abs(DUNGEON_SEGMENT_OFFSETS[HoveredSegment.W].Z) == 1 ? 0 : 1);
 		FBox box = FBox::BuildAABB(center + WorldPosition, FVector(size * (Mode->LevelDungeon->Scale/2) - 1));
 		
-		//TODO: render a marker for ctrl/shift mode as well as normal paint mode.
-		//TODO: for normal paint, just draw a selection box like in the edit mode.
 		if (FDungeoneerEditorEdMode::GetEdMode()->IsCtrlDown())
 		{
 			DrawWireBox(PDI, box, FColor::FromHex("99CCFF"), SDPG_World, 4);
@@ -74,18 +73,25 @@ bool FDungeoneerPaintTool::HandleClick(FEditorViewportClient* InViewportClient, 
 			int CustomModelIndex = -1;
 			if (FDungeoneerEditorEdMode::GetEdMode()->LevelDungeon->GetHitInfo(ISMI, TilePoint, Direction, CustomModelIndex))
 			{
-				if (Click.IsControlDown())
-					FDungeoneerEditorEdMode::GetEdMode()->AddTile(TilePoint + DUNGEON_SEGMENT_OFFSETS[(int)Direction]);
-				else if (Click.IsShiftDown())
-					FDungeoneerEditorEdMode::GetEdMode()->RemoveTile(TilePoint);
-				else
+				if (Click.GetKey() == EKeys::RightMouseButton)
 				{
-					SDungeoneerTemplateWidget* TemplateWidget = (SDungeoneerTemplateWidget*)PanelWidget.Get();
-					FDungeoneerEditorEdMode::GetEdMode()->UpdateTile(TilePoint, Direction, TemplateWidget->GetSelectedTemplate());
+					FDungeoneerEditorEdMode::GetEdMode()->RotateTile(
+						TilePoint, Direction, DUNGEON_SEGMENT_ROTATIONS[(int)Direction].Vector());
+				}
+				if (Click.GetKey() == EKeys::LeftMouseButton)
+				{
+					if (Click.IsControlDown())
+						FDungeoneerEditorEdMode::GetEdMode()->AddTile(TilePoint + DUNGEON_SEGMENT_OFFSETS[(int)Direction]);
+					else if (Click.IsShiftDown())
+						FDungeoneerEditorEdMode::GetEdMode()->RemoveTile(TilePoint);
+					else if (FDungeoneerEditorEdMode::GetEdMode()->GetSelectedTemplate() != NAME_None)
+						FDungeoneerEditorEdMode::GetEdMode()->UpdateTile(TilePoint, Direction, FDungeoneerEditorEdMode::GetEdMode()->GetSelectedTemplate());
 				}
 			}
 		}
+		return true;
 	}
+	
 	return false;
 }
 
@@ -111,4 +117,21 @@ bool FDungeoneerPaintTool::MouseMove(FEditorViewportClient* ViewportClient, FVie
 	}
 	
 	return false;
+}
+
+void FDungeoneerPaintTool::DrawHUD(FEditorViewportClient* ViewportClient, FViewport* Viewport, const FSceneView* View,
+	FCanvas* Canvas)
+{
+	if (!ValidHover) return;
+	FString HoverInfo = "";
+	HoverInfo += FString::FromInt((int)HoveredSegment.X);
+	HoverInfo += ", ";
+	HoverInfo += FString::FromInt((int)HoveredSegment.Y);
+	HoverInfo += ", ";
+	HoverInfo += FString::FromInt((int)HoveredSegment.Z);
+	HoverInfo += " [";
+	HoverInfo += FString::FromInt((int)HoveredSegment.W);
+	HoverInfo += "]";
+	
+	Canvas->DrawShadowedText(50, 50, FText::FromString(HoverInfo), GEditor->GetMediumFont(), FLinearColor::White);
 }

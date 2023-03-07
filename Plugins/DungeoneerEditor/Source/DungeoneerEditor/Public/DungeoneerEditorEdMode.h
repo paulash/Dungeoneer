@@ -125,19 +125,19 @@ public:
 		return true;
 	}
 
-	bool AddCustomModel(FIntVector TilePoint, FName ModelTemplate)
+	bool RotateTile(FIntVector TilePoint, EDungeonSegment Segment, FVector Axis)
 	{
-		return true;
-	}
-
-	bool RemoveCustomModel(FIntVector TilePoint, FString ModelUUID)
-	{
+		if (!LevelDungeon) return false;
+		
 		return true;
 	}
 	
 	bool IsCtrlDown() { return CtrlDown; };
 	bool IsShiftDown() { return ShiftDown; };
 
+
+	FName GetSelectedTemplate();
+	
 private:
 
 	bool CtrlDown = false;

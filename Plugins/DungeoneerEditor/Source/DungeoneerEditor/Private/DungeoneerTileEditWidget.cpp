@@ -12,9 +12,6 @@ void SDungeoneerTileEditWidget::Construct(const FArguments& InArgs)
 	WestCombo = SNew(SDungeoneerTemplateCombo);
 	UpCombo = SNew(SDungeoneerTemplateCombo);
 	DownCombo = SNew(SDungeoneerTemplateCombo);
-	ModelCombo = SNew(SDungeoneerTemplateCombo);
-
-	NorthCombo->OnSelectionChanged()
 	
 	ChildSlot
 	[
@@ -128,24 +125,6 @@ void SDungeoneerTileEditWidget::Construct(const FArguments& InArgs)
 						DownCombo.ToSharedRef()
 					]
 			]
-			+ SVerticalBox::Slot()
-			.VAlign(VAlign_Top)
-			.AutoHeight()
-			[
-				SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot()
-					.HAlign(HAlign_Fill)
-					.FillWidth(0.33)
-					[
-						SNew(STextBlock).Text(FText::FromString("MODEL"))
-					]
-					+ SHorizontalBox::Slot()
-					.HAlign(HAlign_Fill)
-					.FillWidth(1.0)
-					[
-						ModelCombo.ToSharedRef()
-					]
-			]
 	];
 }
 
@@ -165,7 +144,6 @@ void SDungeoneerTileEditWidget::OnUpdateSelection(TArray<FVector4> SelectedTiles
 			WestCombo->SetSelection(Tile.SegmentModels[3]);
 			UpCombo->SetSelection(Tile.SegmentModels[4]);
 			DownCombo->SetSelection(Tile.SegmentModels[5]);
-			ModelCombo->SetSelection(Tile.SegmentModels[6]);
 		}
 	}
 }
