@@ -1,7 +1,7 @@
 #pragma once
 #include "DungeoneerEditorEdMode.h"
 #include "Widgets/SCompoundWidget.h"
-#include "Widgets/Views/SListView.h"
+#include "DungeoneerTemplateCombo.h"
 #include "IStructureDetailsView.h"
 
 class SDungeoneerTileEditWidget : public SCompoundWidget
@@ -20,4 +20,12 @@ private:
 	TSharedPtr<STextBlock> TestText;
 	
 	TSharedPtr<IStructureDetailsView> SelectionDetails;
+
+	TSharedPtr<SDungeoneerTemplateCombo> NorthCombo;
+	TSharedPtr<SDungeoneerTemplateCombo> EastCombo;
+	TSharedPtr<SDungeoneerTemplateCombo> SouthCombo;
+	TSharedPtr<SDungeoneerTemplateCombo> WestCombo;
+	TSharedPtr<SDungeoneerTemplateCombo> UpCombo;
+	TSharedPtr<SDungeoneerTemplateCombo> DownCombo;
+	TSharedPtr<SDungeoneerTemplateCombo> ModelCombo;
 };

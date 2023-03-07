@@ -128,6 +128,20 @@ bool FDungeoneerEditorEdMode::IsSelectionAllowed(AActor* InActor, bool bInSelect
 bool FDungeoneerEditorEdMode::InputKey(FEditorViewportClient* ViewportClient, FViewport* Viewport, FKey Key,
 	EInputEvent Event)
 {
+	if (Key == EKeys::LeftControl || Key == EKeys::RightControl)
+	{
+		if (Event == EInputEvent::IE_Pressed)
+			CtrlDown = true;
+		if (Event == EInputEvent::IE_Released)
+			CtrlDown = false;
+	}
+	if (Key == EKeys::LeftShift || Key == EKeys::RightShift)
+	{
+		if (Event == EInputEvent::IE_Pressed)
+			ShiftDown = true;
+		if (Event == EInputEvent::IE_Released)
+			ShiftDown = false;
+	}
 	return CurrentTool->InputKey(ViewportClient, Viewport, Key, Event);
 }
 

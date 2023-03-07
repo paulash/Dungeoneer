@@ -24,7 +24,7 @@ void FDungeoneerTileEditTool::Render(const FSceneView* View, FViewport* Viewport
 		
 		for (int s=0; s < DUNGEON_SEGMENT_COUNT; s++)
 		{
-			if (Mode->LevelDungeon->Tiles.Contains(TilePoints[i] + DUNGEON_DIRECTIONS[s]))
+			if (Mode->LevelDungeon->Tiles.Contains(TilePoints[i] + DUNGEON_SEGMENT_OFFSETS[s]))
 				continue;
 			
 			FVector WorldPosition =
@@ -35,27 +35,28 @@ void FDungeoneerTileEditTool::Render(const FSceneView* View, FViewport* Viewport
 					(TilePoints[i].Z * Mode->LevelDungeon->Scale) + (Mode->LevelDungeon->Scale * 0.5));
 			
 			FVector center = FVector(
-			((DUNGEON_DIRECTIONS[s].X * 0.5f) * Mode->LevelDungeon->Scale),
-			((DUNGEON_DIRECTIONS[s].Y * 0.5f) * Mode->LevelDungeon->Scale), 
-			((DUNGEON_DIRECTIONS[s].Z * 0.5f) * Mode->LevelDungeon->Scale));
+			((DUNGEON_SEGMENT_OFFSETS[s].X * 0.5f) * Mode->LevelDungeon->Scale),
+			((DUNGEON_SEGMENT_OFFSETS[s].Y * 0.5f) * Mode->LevelDungeon->Scale), 
+			((DUNGEON_SEGMENT_OFFSETS[s].Z * 0.5f) * Mode->LevelDungeon->Scale));
 			center -= FVector(
-				DUNGEON_DIRECTIONS[s].X,
-				DUNGEON_DIRECTIONS[s].Y,
-				DUNGEON_DIRECTIONS[s].Z);
+				DUNGEON_SEGMENT_OFFSETS[s].X,
+				DUNGEON_SEGMENT_OFFSETS[s].Y,
+				DUNGEON_SEGMENT_OFFSETS[s].Z);
 
+			FVector size = FVector(FMath::Abs(DUNGEON_SEGMENT_OFFSETS[s].X) == 1 ? 0 : 1,
+									FMath::Abs(DUNGEON_SEGMENT_OFFSETS[s].Y) == 1 ? 0 : 1,
+									FMath::Abs(DUNGEON_SEGMENT_OFFSETS[s].Z) == 1 ? 0 : 1);
+			FBox box = FBox::BuildAABB(center + WorldPosition, FVector(size * (Mode->LevelDungeon->Scale/2) - 1));
+			
 			FVector4 SegmentPoint = FVector4(
 				TilePoints[i].X,
 				TilePoints[i].Y,
 				TilePoints[i].Z,
 				s);
 
+			
 			bool selected = SelectedSegments.Contains(SegmentPoint);
 			bool hovered = HoveredSegmentValid ? SegmentPoint == HoveredSegment : false;
-			
-			FVector size = FVector(FMath::Abs(DUNGEON_DIRECTIONS[s].X) == 1 ? 0 : 1,
-									FMath::Abs(DUNGEON_DIRECTIONS[s].Y) == 1 ? 0 : 1,
-									FMath::Abs(DUNGEON_DIRECTIONS[s].Z) == 1 ? 0 : 1);
-			FBox box = FBox::BuildAABB(center + WorldPosition, FVector(size * (Mode->LevelDungeon->Scale/2) - 1));
 			
 			if (selected || hovered)
 			{
@@ -90,7 +91,7 @@ bool FDungeoneerTileEditTool::HandleClick(FEditorViewportClient* InViewportClien
 		HInstancedStaticMeshInstance* HISMI = (HInstancedStaticMeshInstance*)HitProxy;
 		
 		FIntVector TilePoint;
-		EDungeonDirection Direction;
+		EDungeonSegment Direction;
 		int CustomModelIndex;
 		
 		if (FDungeoneerEditorEdMode::GetEdMode()->LevelDungeon->GetHitInfo(HISMI, TilePoint, Direction, CustomModelIndex))
@@ -132,7 +133,7 @@ bool FDungeoneerTileEditTool::MouseMove(FEditorViewportClient* ViewportClient, F
 		if (HISMI)
 		{
 			FIntVector TilePoint;
-			EDungeonDirection Direction;
+			EDungeonSegment Direction;
 			int CustomModelIndex;
 		
 			if (FDungeoneerEditorEdMode::GetEdMode()->LevelDungeon->GetHitInfo(HISMI, TilePoint, Direction, CustomModelIndex))

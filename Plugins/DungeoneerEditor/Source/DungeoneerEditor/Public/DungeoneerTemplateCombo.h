@@ -1,4 +1,11 @@
+#pragma once
+#include "DungeoneerEditorEdMode.h"
+#include "Widgets/SCompoundWidget.h"
+#include "IStructureDetailsView.h"
+
 #define LOCTEXT_NAMESPACE "DungeoneerTemplateCombo"
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnSelectTemplate, FName /*, TemplateName*/);
 
 class SDungeoneerTemplateCombo : public SCompoundWidget
 {
@@ -7,26 +14,23 @@ public:
 	{}
 	SLATE_END_ARGS()
 
-	typedef TSharedPtr<FString> FComboItemType;
-	
+	FOnSelectTemplate OnSelectTemplate;
+
 	void Construct(const FArguments& InArgs);
 
-	TSharedRef<SWidget> MakeWidgetForOption(FComboItemType InOption)
+	TSharedRef<SWidget> MakeWidgetForOption(TSharedPtr<FString>  InOption)
 	{
 		return SNew(STextBlock).Text(FText::FromString(*InOption));
 	}
 
-	void OnSelectionChanged(FComboItemType NewValue, ESelectInfo::Type);
+	void OnSelectionChanged(TSharedPtr<FString> NewValue, ESelectInfo::Type);
 
 	FText GetCurrentItemLabel() const
 	{
-		if (CurrentItem.IsValid())
-		{
-			return FText::FromString(*CurrentItem);
-		}
-
-		return LOCTEXT("InvalidComboEntryText", "<<Invalid option>>");
+		return FText::FromString(SelectedTemplate.ToString());
 	}
+
+	void SetSelection(FName TemplateName);
 
 protected:
 
@@ -45,10 +49,9 @@ protected:
 	
 	void RefreshTemplates();
 
-	FComboItemType CurrentItem;
-	TArray<FComboItemType> Options;
-
-	TSharedPtr<SComboBox<FComboItemType>> ComboBox;
+	FName SelectedTemplate = "NONE";
+	TArray<TSharedPtr<FString>> Templates;
+	TSharedPtr<SComboBox<TSharedPtr<FString>>> ComboBox;
 	
 };
 

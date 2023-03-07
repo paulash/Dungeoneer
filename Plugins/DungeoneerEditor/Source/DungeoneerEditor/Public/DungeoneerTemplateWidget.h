@@ -12,6 +12,8 @@ public:
 
 	void Construct(const FArguments& InArgs);
 
+	FName GetSelectedTemplate() { return SelectedTemplate; };
+
 private:
 
 	TSharedRef<ITableRow> OnGenerateRowForTemplateList(TSharedPtr<FString> Item, const TSharedRef<STableViewBase>& OwnerTable)

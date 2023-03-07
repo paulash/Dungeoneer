@@ -57,12 +57,12 @@ void ADungeon::CreateTile(FIntVector TilePoint)
 	Modify();
 	
 	FDungeonTile NewTile = FDungeonTile();
-	NewTile.SegmentModels[(int)EDungeonDirection::NORTH] = "DEFAULT_WALL";
-	NewTile.SegmentModels[(int)EDungeonDirection::EAST] = "DEFAULT_WALL";
-	NewTile.SegmentModels[(int)EDungeonDirection::SOUTH] = "DEFAULT_WALL";
-	NewTile.SegmentModels[(int)EDungeonDirection::WEST] = "DEFAULT_WALL";
-	NewTile.SegmentModels[(int)EDungeonDirection::DOWN] = "DEFAULT_FLOOR";
-	NewTile.SegmentModels[(int)EDungeonDirection::UP] = "DEFAULT_CEILING";
+	NewTile.SegmentModels[(int)EDungeonSegment::NORTH] = "DEFAULT_WALL";
+	NewTile.SegmentModels[(int)EDungeonSegment::EAST] = "DEFAULT_WALL";
+	NewTile.SegmentModels[(int)EDungeonSegment::SOUTH] = "DEFAULT_WALL";
+	NewTile.SegmentModels[(int)EDungeonSegment::WEST] = "DEFAULT_WALL";
+	NewTile.SegmentModels[(int)EDungeonSegment::DOWN] = "DEFAULT_FLOOR";
+	NewTile.SegmentModels[(int)EDungeonSegment::UP] = "DEFAULT_CEILING";
 	
 	Tiles.Emplace(TilePoint, NewTile);
 
@@ -89,7 +89,7 @@ void ADungeon::DeleteTile(FIntVector TilePoint)
 	RegenerateTiles();
 }
 
-void ADungeon::SetSegmentTemplate(FIntVector TilePoint, EDungeonDirection Segment, FName Template)
+void ADungeon::SetSegmentTemplate(FIntVector TilePoint, EDungeonSegment Segment, FName Template)
 {
 	if (!Tiles.Contains(TilePoint)) return;
 
@@ -145,7 +145,7 @@ void ADungeon::RegenerateTiles()
 		for (int s=0; s < DUNGEON_SEGMENT_COUNT; s++)
 		{
 			// if there is an opening in the direction, dont render that segment.
-			if (Tiles.Contains(TilePoints[i] + DUNGEON_DIRECTIONS[s]))
+			if (Tiles.Contains(TilePoints[i] + DUNGEON_SEGMENT_OFFSETS[s]))
 				continue;
 
 			if (!BatchedInstances.Contains(Tile.SegmentModels[s]))
@@ -163,26 +163,6 @@ void ADungeon::RegenerateTiles()
 			BatchedInstances[Tile.SegmentModels[s]].Transforms.Emplace(Transform);
 			BatchedInstances[Tile.SegmentModels[s]].TilePoints.Emplace(TilePoints[i]);
 			BatchedInstances[Tile.SegmentModels[s]].Segments.Emplace(s);
-		}
-
-		// add all the custom models to the batch.
-		for (int c=0; c < Tile.CustomModelInstances.Num(); c++)
-		{
-			FTransform Transform = FTransform(
-				Tile.CustomModelInstances[c].Offset.GetRotation(),
-				FVector(
-					TilePoints[i].X * Scale,
-					TilePoints[i].Y * Scale,
-					TilePoints[i].Z * Scale + (Scale/2)) + Tile.CustomModelInstances[c].Offset.GetLocation(),
-					Tile.CustomModelInstances[c].Offset.GetScale3D());
-
-			if (!BatchedInstances.Contains(Tile.CustomModelInstances[c].TemplateName))
-				BatchedInstances.Emplace(Tile.CustomModelInstances[c].TemplateName, FDungeonBatchedInstance());
-
-			FDungeonModel Model = DungeonPalette.Models.FindRef(Tile.CustomModelInstances[c].TemplateName);
-			BatchedInstances[Tile.CustomModelInstances[c].TemplateName].Transforms.Emplace(Transform);
-			BatchedInstances[Tile.CustomModelInstances[c].TemplateName].TilePoints.Emplace(TilePoints[i]);
-			BatchedInstances[Tile.CustomModelInstances[c].TemplateName].Segments.Emplace(-c);
 		}
 		OnRefreshTile.Broadcast(this, TilePoints[i]);
 	}

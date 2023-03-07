@@ -7,17 +7,17 @@ void SDungeoneerTemplateCombo::Construct(const FArguments& InArgs)
 	FDungeoneerEditorEdMode::GetEdMode()->OnTemplateRemoved.AddRaw(this, &SDungeoneerTemplateCombo::OnTemplateRemoved);
 	FDungeoneerEditorEdMode::GetEdMode()->OnTemplateRenamed.AddRaw(this, &SDungeoneerTemplateCombo::OnTemplateRenamed);
 
-	ComboBox = SNew(SComboBox<FComboItemType>)
-		.OptionsSource(&Options)
+	RefreshTemplates();
+	ComboBox = SNew(SComboBox<TSharedPtr<FString>>)
+		.OptionsSource(&Templates)
 		.OnSelectionChanged(this, &SDungeoneerTemplateCombo::OnSelectionChanged)
 		.OnGenerateWidget(this, &SDungeoneerTemplateCombo::MakeWidgetForOption)
-		.InitiallySelectedItem(CurrentItem)
+		.InitiallySelectedItem(Templates[0])
 		[
 			SNew(STextBlock)
 			.Text(this, &SDungeoneerTemplateCombo::GetCurrentItemLabel)
 		];
-	RefreshTemplates();
-	CurrentItem = Options[0];
+	SelectedTemplate = FName(*Templates[0]);
 	
 	ChildSlot
 	[
@@ -25,25 +25,38 @@ void SDungeoneerTemplateCombo::Construct(const FArguments& InArgs)
 	];
 }
 
-void SDungeoneerTemplateCombo::OnSelectionChanged(FComboItemType NewValue, ESelectInfo::Type)
+void SDungeoneerTemplateCombo::OnSelectionChanged(TSharedPtr<FString> NewValue, ESelectInfo::Type)
 {
-	CurrentItem = NewValue;
+	if (!NewValue.IsValid())
+	{
+		SelectedTemplate = "NONE";
+		return;
+	}
+	SelectedTemplate = FName(*NewValue);
+	OnSelectTemplate.Broadcast(SelectedTemplate);
+}
+
+void SDungeoneerTemplateCombo::SetSelection(FName TemplateName)
+{
+	SelectedTemplate = TemplateName;
 }
 
 void SDungeoneerTemplateCombo::RefreshTemplates()
 {
-	Options.Empty();
+	Templates.Empty();
 	if (FDungeoneerEditorEdMode::GetEdMode()->LevelDungeon->DungeonPalette.Models.Num() == 0)
 	{
-		Options.Add(MakeShareable(new FString("NO TEMPLATES!")));	
+		Templates.Add(MakeShareable(new FString("NO TEMPLATES!")));	
 	}
 	else
 	{
 		TArray<FName> TemplateNames;
 		FDungeoneerEditorEdMode::GetEdMode()->LevelDungeon->DungeonPalette.Models.GenerateKeyArray(TemplateNames);
 
+		Templates.Add(MakeShareable(new FString("NONE")));
 		for (int i=0; i < TemplateNames.Num(); i++)
-			Options.Add(MakeShareable(new FString(TemplateNames[i].ToString())));
+			Templates.Add(MakeShareable(new FString(TemplateNames[i].ToString())));
 	}
-	ComboBox->RefreshOptions();
+	if (ComboBox)
+		ComboBox->RefreshOptions();
 }

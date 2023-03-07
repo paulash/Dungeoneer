@@ -11,7 +11,7 @@ struct HDungeonSegmentProxy : public HHitProxy
 {
 	DECLARE_HIT_PROXY();
 	
-	HDungeonSegmentProxy(FIntVector tilePoint, EDungeonDirection segment)
+	HDungeonSegmentProxy(FIntVector tilePoint, EDungeonSegment segment)
 		: HHitProxy(HPP_Foreground), TilePoint(tilePoint), Segment(segment)
 	{}
 
@@ -21,7 +21,7 @@ struct HDungeonSegmentProxy : public HHitProxy
 	}
 	
 	FIntVector TilePoint;
-	EDungeonDirection Segment;
+	EDungeonSegment Segment;
 };
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnTemplateAdded, FName /*, TemplateName*/);
@@ -113,11 +113,15 @@ public:
 
 	bool RemoveTile(FIntVector TilePoint)
 	{
+		if (!LevelDungeon) return false;
+		LevelDungeon->DeleteTile(TilePoint);
 		return true;
 	}
 
-	bool UpdateTile(FIntVector TilePoint, EDungeonDirection Segment, FName NewTemplate)
+	bool UpdateTile(FIntVector TilePoint, EDungeonSegment Segment, FName NewTemplate)
 	{
+		if (!LevelDungeon) return false;
+		LevelDungeon->SetSegmentTemplate(TilePoint, Segment, NewTemplate);
 		return true;
 	}
 
@@ -130,8 +134,15 @@ public:
 	{
 		return true;
 	}
+	
+	bool IsCtrlDown() { return CtrlDown; };
+	bool IsShiftDown() { return ShiftDown; };
 
 private:
+
+	bool CtrlDown = false;
+	bool ShiftDown = false;
+	
 	TArray<TUniquePtr<FDungeoneerTool>> Tools;
 	
 };

@@ -7,17 +7,18 @@
 #include "Dungeon.generated.h"
 
 UENUM(BlueprintType)
-enum class EDungeonDirection : uint8
+enum class EDungeonSegment : uint8
 {
 	NORTH,
 	SOUTH,
 	EAST,
 	WEST,
 	DOWN,
-	UP
+	UP,
+	MODEL
 };
 
-#define DUNGEON_SEGMENT_COUNT 6
+#define DUNGEON_SEGMENT_COUNT 7
 
 const static TArray<FRotator> DUNGEON_SEGMENT_ROTATIONS = {
 	FRotator(180, 90, 90),	// NORTH
@@ -34,14 +35,16 @@ const static TArray<FRotator> DUNGEON_SEGMENT_ROTATIONS = {
 #define WEST_POINT FIntVector(0, -1, 0)
 #define FLOOR_POINT FIntVector(0, 0, -1)
 #define CEILING_POINT FIntVector(0,0, 1)
+#define MODEL_POINT FIntVector(0, 0, 0)
 
-const static TArray<FIntVector> DUNGEON_DIRECTIONS = {
+const static TArray<FIntVector> DUNGEON_SEGMENT_OFFSETS = {
 	NORTH_POINT,
 	EAST_POINT,
 	SOUTH_POINT,
 	WEST_POINT,
 	FLOOR_POINT,
-	CEILING_POINT
+	CEILING_POINT,
+	MODEL_POINT
 };
 
 USTRUCT()
@@ -78,23 +81,6 @@ public:
 	UStaticMesh* Mesh = NULL;
 };
 
-USTRUCT()
-struct FDungeonCustomModelInstance
-{
-	GENERATED_BODY()
-
-public:
-
-	UPROPERTY(EditAnywhere)
-	FString UUID;
-	
-	UPROPERTY(EditAnywhere)
-	FName TemplateName;
-
-	UPROPERTY(EditAnywhere)
-	FTransform Offset;
-};
-
 USTRUCT(BlueprintType)
 struct FDungeonTile
 {
@@ -104,9 +90,6 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	TArray<FName> SegmentModels;
-
-	UPROPERTY(EditAnywhere)
-	TArray<FDungeonCustomModelInstance> CustomModelInstances;
 
 	UPROPERTY(EditAnywhere)
 	FGameplayTagContainer Tags;
@@ -196,25 +179,25 @@ public:
 	}
 
 	UFUNCTION(BlueprintPure)
-	FIntVector DirectionToVector(EDungeonDirection Direction)
+	FIntVector DirectionToVector(EDungeonSegment Direction)
 	{
-		return DUNGEON_DIRECTIONS[(int)Direction];
+		return DUNGEON_SEGMENT_OFFSETS[(int)Direction];
 	};
 
 	UFUNCTION(BlueprintPure)
-	FRotator DirectionToRotator(EDungeonDirection Direction)
+	FRotator DirectionToRotator(EDungeonSegment Direction)
 	{
 		return FRotator(0, 0, (int)Direction * 90);
 	}
 
 	UFUNCTION(BlueprintPure)
-	FIntVector GetTileVectorInDirection(FIntVector Center, EDungeonDirection FacingDirection, EDungeonDirection SampleDirection)
+	FIntVector GetTileVectorInDirection(FIntVector Center, EDungeonSegment FacingDirection, EDungeonSegment SampleDirection)
 	{
 		return FIntVector(0,0,0);
 	};
 
 	UFUNCTION(BlueprintCallable)
-	void SetSegmentTemplate(FIntVector TilePoint, EDungeonDirection Segment, FName Template);
+	void SetSegmentTemplate(FIntVector TilePoint, EDungeonSegment Segment, FName Template);
 
 	UFUNCTION(BlueprintCallable)
 	void AddTileGameplayTag(FIntVector TilePoint, FGameplayTag tag);
@@ -281,7 +264,7 @@ public:
 		return true;
 	};
 
-	bool GetHitInfo(const HInstancedStaticMeshInstance* hitProxy, FIntVector& TilePoint, EDungeonDirection& Direction, int& CustomModelIndex)
+	bool GetHitInfo(const HInstancedStaticMeshInstance* hitProxy, FIntVector& TilePoint, EDungeonSegment& Direction, int& CustomModelIndex)
 	{
 		if (!ISMCValues.Contains(hitProxy->Component)) return false; 
 		
@@ -292,11 +275,11 @@ public:
 		);
 
 		CustomModelIndex = -1;
-		Direction = EDungeonDirection::NORTH;
+		Direction = EDungeonSegment::NORTH;
 		
 		int segment = hitProxy->Component->PerInstanceSMCustomData[(hitProxy->InstanceIndex * 4)+3];
 		if (segment >= 0)
-			Direction = (EDungeonDirection)segment;
+			Direction = (EDungeonSegment)segment;
 		else
 			CustomModelIndex = -segment;
 		return true;
