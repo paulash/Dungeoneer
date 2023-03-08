@@ -75,17 +75,19 @@ bool FDungeoneerPaintTool::HandleClick(FEditorViewportClient* InViewportClient, 
 			{
 				if (Click.GetKey() == EKeys::RightMouseButton)
 				{
-					FDungeoneerEditorEdMode::GetEdMode()->RotateTile(
-						TilePoint, Direction, DUNGEON_SEGMENT_ROTATIONS[(int)Direction].Vector());
+					DUNGEON_SEGMENT_ROTATIONS[(int)Direction];
+					//FDungeoneerEditorEdMode::GetEdMode()->RotateTile(
+					//	TilePoint, Direction, );
 				}
 				if (Click.GetKey() == EKeys::LeftMouseButton)
 				{
 					if (Click.IsControlDown())
-						FDungeoneerEditorEdMode::GetEdMode()->AddTile(TilePoint + DUNGEON_SEGMENT_OFFSETS[(int)Direction]);
+						FDungeoneerEditorEdMode::GetEdMode()->AddTile(TilePoint + DUNGEON_SEGMENT_OFFSETS[(int)Direction]);	
 					else if (Click.IsShiftDown())
 						FDungeoneerEditorEdMode::GetEdMode()->RemoveTile(TilePoint);
 					else if (FDungeoneerEditorEdMode::GetEdMode()->GetSelectedTemplate() != NAME_None)
-						FDungeoneerEditorEdMode::GetEdMode()->UpdateTile(TilePoint, Direction, FDungeoneerEditorEdMode::GetEdMode()->GetSelectedTemplate());
+						FDungeoneerEditorEdMode::GetEdMode()->UpdateTile(
+							TilePoint, Direction, FDungeoneerEditorEdMode::GetEdMode()->GetSelectedTemplate());
 				}
 			}
 		}

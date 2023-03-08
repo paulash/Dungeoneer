@@ -11,7 +11,6 @@ public class DungeoneerGame : ModuleRules
 		PublicIncludePaths.AddRange(
 			new string[] {
 				// ... add public include paths required here ...
-				"./DungeoneerGame/Public"
 			}
 			);
 				
@@ -19,7 +18,6 @@ public class DungeoneerGame : ModuleRules
 		PrivateIncludePaths.AddRange(
 			new string[] {
 				// ... add other private include paths required here ...
-				"./DungeoneerGame/Private"
 			}
 			);
 			

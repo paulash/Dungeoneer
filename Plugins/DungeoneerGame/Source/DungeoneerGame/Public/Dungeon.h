@@ -28,6 +28,15 @@ const static TArray<FRotator> DUNGEON_SEGMENT_ROTATIONS = {
 	FRotator(180, 0, 0),	// UP
 };
 
+const static TArray<FVector> DUNGEON_SEGMENT_NORMAL = {
+	FVector(1, 0, 0),
+	FVector(0, 1, 0),
+	FVector(-1, 0 ,0),
+	FVector(0, -1, 0),
+	FVector(0, 0, 1),
+	FVector(0, 0, -1)
+};
+
 #define NORTH_POINT FIntVector(1, 0, 0)
 #define EAST_POINT FIntVector(0, 1, 0)
 #define SOUTH_POINT FIntVector(-1, 0, 0)

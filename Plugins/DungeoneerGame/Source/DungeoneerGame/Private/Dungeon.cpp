@@ -50,10 +50,7 @@ void ADungeon::OnConstruction(const FTransform& Transform)
 void ADungeon::CreateTile(FIntVector TilePoint)
 {
 	if (Tiles.Contains(TilePoint)) return;
-
-#ifdef WITH_EDITOR
-	//GEditor->BeginTransaction(LOCTEXT("AddTileTransactionName", "Add Tile"));
-#endif
+	
 	Modify();
 	
 	FDungeonTile NewTile = FDungeonTile();
@@ -65,10 +62,6 @@ void ADungeon::CreateTile(FIntVector TilePoint)
 	NewTile.SegmentModels[(int)EDungeonSegment::UP] = "DEFAULT_CEILING";
 	
 	Tiles.Emplace(TilePoint, NewTile);
-
-#ifdef WITH_EDITOR
-	//GEditor->EndTransaction();
-#endif
 	
 	RegenerateTiles();
 }
@@ -76,31 +69,19 @@ void ADungeon::CreateTile(FIntVector TilePoint)
 void ADungeon::DeleteTile(FIntVector TilePoint)
 {
 	if (!Tiles.Contains(TilePoint)) return;
-
-#ifdef WITH_EDITOR
-	//GEditor->BeginTransaction(LOCTEXT("DeleteTileTransactionName", "Delete Tile"));
-#endif
+	
 	Modify();
 	Tiles.Remove(TilePoint);
-#ifdef WITH_EDITOR
-	//GEditor->EndTransaction();
-#endif
-	
+
 	RegenerateTiles();
 }
 
 void ADungeon::SetSegmentTemplate(FIntVector TilePoint, EDungeonSegment Segment, FName Template)
 {
 	if (!Tiles.Contains(TilePoint)) return;
-
-#ifdef WITH_EDITOR
-	//GEditor->BeginTransaction(LOCTEXT("PaintTileTransactionName", "Paint Tile"));
-#endif
+	
 	Modify();
 	Tiles[TilePoint].SegmentModels[(int)Segment] = Template;
-#ifdef WITH_EDITOR
-	//GEditor->EndTransaction();
-#endif
 	
 	RegenerateTiles();
 }
@@ -186,8 +167,7 @@ void ADungeon::RegenerateTiles()
 				(float)instance.TilePoints[e].Z,
 				(float)instance.Segments[e]
 			});
-		}
-
+		} 
 		// was used, so now its not unused.
 		UnusedISMCs.Remove(ISMC);
 	}
@@ -248,4 +228,4 @@ UInstancedStaticMeshComponent* ADungeon::GetInstancedMeshComponent(FName Templat
 	return ISMC;
 }
 
-#undef LOCTEXT
+#undef LOCTEXT_NAMESPACE
