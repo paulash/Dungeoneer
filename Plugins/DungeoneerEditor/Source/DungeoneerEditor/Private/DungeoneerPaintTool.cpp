@@ -98,6 +98,7 @@ bool FDungeoneerPaintTool::HandleClick(FEditorViewportClient* InViewportClient, 
 			}
 		}
 	}
+	GEditor->RedrawLevelEditingViewports();
 	return true;
 }
 
