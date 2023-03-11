@@ -65,16 +65,17 @@ void FDungeoneerEditorEdMode::Enter()
 		Toolkit->Init(Owner->GetToolkitHost());
 	}
 
-	if (Tools.Num() == 0)
-	{
-		auto Tool_Select = MakeUnique<FDungeoneerTileEditTool>(this);
-		Tools.Emplace(MoveTemp(Tool_Select));
-
-		auto Tool_Paint = MakeUnique<FDungeoneerPaintTool>(this);
-		Tools.Emplace(MoveTemp(Tool_Paint));
+	// TODO: later need to figure out a good way to refresh all the dungeon data because templates will be invalid.
+	Tools.Empty();
 	
-		CurrentTool = Tools[0].Get();
-	}
+	auto Tool_Select = MakeUnique<FDungeoneerTileEditTool>(this);
+	Tools.Emplace(MoveTemp(Tool_Select));
+
+	auto Tool_Paint = MakeUnique<FDungeoneerPaintTool>(this);
+	Tools.Emplace(MoveTemp(Tool_Paint));
+
+	CurrentTool = Tools[0].Get();
+	
 	SetCurrentTool(CurrentTool->GetToolName());
 }
 

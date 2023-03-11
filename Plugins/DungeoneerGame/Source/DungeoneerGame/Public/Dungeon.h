@@ -29,12 +29,12 @@ const static TArray<FRotator> DUNGEON_SEGMENT_ROTATIONS = {
 };
 
 const static TArray<FVector> DUNGEON_SEGMENT_NORMAL = {
-	FVector(1, 0, 0),
 	FVector(0, 1, 0),
-	FVector(-1, 0 ,0),
+	FVector(0, 1, 0),
+	FVector(0, -1 ,0),
 	FVector(0, -1, 0),
-	FVector(0, 0, 1),
-	FVector(0, 0, -1)
+	FVector(0, 0, -1),
+	FVector(0, 0, 1)
 };
 
 #define NORTH_POINT FIntVector(1, 0, 0)
@@ -97,8 +97,10 @@ public:
 	UPROPERTY(EditAnywhere)
 	TArray<FName> SegmentModels;
 
+	// rotations can only be applied to the normal of the segment, so its only 'yaw' from within the segments space.
+	// IE it spins in the place.
 	UPROPERTY(EditAnywhere)
-	TArray<FRotator> SegmentRotation;
+	TArray<float> SegmentRotation;
 
 	UPROPERTY(EditAnywhere)
 	FGameplayTagContainer Tags;
@@ -210,6 +212,9 @@ public:
 	void SetSegmentTemplate(FIntVector TilePoint, EDungeonSegment Segment, FName Template);
 
 	UFUNCTION(BlueprintCallable)
+	void RotateSegment(FIntVector TilePoint, EDungeonSegment Segment, float rotation);
+
+	UFUNCTION(BlueprintCallable)
 	void AddTileGameplayTag(FIntVector TilePoint, FGameplayTag tag);
 
 	UFUNCTION(BlueprintCallable)
@@ -269,7 +274,18 @@ public:
 		RemoveTemplate(OldTemplateName);
 		AddTemplate(NewTemplateName, _template);
 
-		//TODO: step all the tiles, and rename the references to the old template, to the new template.
+		// replace all the references to the old template name, to the new template name.
+		TArray<FIntVector> TilePoints;
+		Tiles.GenerateKeyArray(TilePoints);
+		for (int i=0; i < TilePoints.Num(); i++)
+		{
+			for (int s=0; s < DUNGEON_SEGMENT_COUNT; s++)
+			{
+				if (Tiles[TilePoints[i]].SegmentModels[s] == OldTemplateName)
+					Tiles[TilePoints[i]].SegmentModels[s] = NewTemplateName;
+			}
+		}
+		
 		RegenerateTiles();
 		return true;
 	};

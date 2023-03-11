@@ -86,6 +86,15 @@ void ADungeon::SetSegmentTemplate(FIntVector TilePoint, EDungeonSegment Segment,
 	RegenerateTiles();
 }
 
+void ADungeon::RotateSegment(FIntVector TilePoint, EDungeonSegment Segment, float rotation)
+{
+	if (!Tiles.Contains(TilePoint)) return;
+	
+	Modify();
+	Tiles[TilePoint].SegmentRotation[(int)Segment] = rotation;
+	RegenerateTiles();
+}
+
 void ADungeon::AddTileGameplayTag(FIntVector TilePoint, FGameplayTag tag)
 {
 	if (!Tiles.Contains(TilePoint)) return;
@@ -132,8 +141,9 @@ void ADungeon::RegenerateTiles()
 			if (!BatchedInstances.Contains(Tile.SegmentModels[s]))
 				BatchedInstances.Emplace(Tile.SegmentModels[s], FDungeonBatchedInstance());
 
+			FRotator segmentOffsetRotation = FRotator::MakeFromEuler(DUNGEON_SEGMENT_NORMAL[s] * Tile.SegmentRotation[s]);
 			FTransform Transform = FTransform(
-				DUNGEON_SEGMENT_ROTATIONS[s] + Tile.SegmentRotation[s],
+				DUNGEON_SEGMENT_ROTATIONS[s] + segmentOffsetRotation,
 				FVector(
 					TilePoints[i].X * Scale,
 					TilePoints[i].Y * Scale,

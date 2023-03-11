@@ -125,10 +125,10 @@ public:
 		return true;
 	}
 
-	bool RotateTile(FIntVector TilePoint, EDungeonSegment Segment, FVector Axis)
+	bool RotateTile(FIntVector TilePoint, EDungeonSegment Segment, float NewRotation)
 	{
 		if (!LevelDungeon) return false;
-		
+		LevelDungeon->RotateSegment(TilePoint, Segment, NewRotation);
 		return true;
 	}
 	

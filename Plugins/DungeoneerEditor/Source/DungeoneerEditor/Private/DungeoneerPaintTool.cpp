@@ -75,9 +75,15 @@ bool FDungeoneerPaintTool::HandleClick(FEditorViewportClient* InViewportClient, 
 			{
 				if (Click.GetKey() == EKeys::RightMouseButton)
 				{
-					DUNGEON_SEGMENT_ROTATIONS[(int)Direction];
-					//FDungeoneerEditorEdMode::GetEdMode()->RotateTile(
-					//	TilePoint, Direction, );
+					FDungeonTile Tile;
+					if (FDungeoneerEditorEdMode::GetEdMode()->LevelDungeon->GetTile(TilePoint, Tile))
+					{
+						float currentRotation = Tile.SegmentRotation[(int)Direction];
+						if (currentRotation + 90 == 360)
+							FDungeoneerEditorEdMode::GetEdMode()->RotateTile(TilePoint, Direction, 0);
+						else
+							FDungeoneerEditorEdMode::GetEdMode()->RotateTile(TilePoint, Direction, currentRotation += 90);
+					}
 				}
 				if (Click.GetKey() == EKeys::LeftMouseButton)
 				{
@@ -91,10 +97,8 @@ bool FDungeoneerPaintTool::HandleClick(FEditorViewportClient* InViewportClient, 
 				}
 			}
 		}
-		return true;
 	}
-	
-	return false;
+	return true;
 }
 
 bool FDungeoneerPaintTool::MouseMove(FEditorViewportClient* ViewportClient, FViewport* Viewport, int32 x, int32 y)
@@ -118,7 +122,7 @@ bool FDungeoneerPaintTool::MouseMove(FEditorViewportClient* ViewportClient, FVie
 		}
 	}
 	
-	return false;
+	return true;
 }
 
 void FDungeoneerPaintTool::DrawHUD(FEditorViewportClient* ViewportClient, FViewport* Viewport, const FSceneView* View,
