@@ -6,6 +6,8 @@ class FDungeoneerTileEditTool final : public FDungeoneerTool
 public:
 	FDungeoneerTileEditTool(FDungeoneerEditorEdMode* _Mode);
 
+	virtual void Shutdown() override;
+
 	virtual FName GetToolName() override { return "TOOL_EDIT"; };
 	
 	virtual void Render(const FSceneView* View, FViewport* Viewport, FPrimitiveDrawInterface* PDI) override;

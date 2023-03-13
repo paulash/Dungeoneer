@@ -94,12 +94,12 @@ struct FDungeonTile
 
 public:
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY()
 	TArray<FName> SegmentModels;
 
 	// rotations can only be applied to the normal of the segment, so its only 'yaw' from within the segments space.
 	// IE it spins in the place.
-	UPROPERTY(EditAnywhere)
+	UPROPERTY()
 	TArray<float> SegmentRotation;
 
 	UPROPERTY(EditAnywhere)

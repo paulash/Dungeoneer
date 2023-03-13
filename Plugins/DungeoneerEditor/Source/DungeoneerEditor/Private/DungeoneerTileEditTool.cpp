@@ -11,6 +11,12 @@ FDungeoneerTileEditTool::FDungeoneerTileEditTool(FDungeoneerEditorEdMode* _Mode)
 	PanelWidget = SNew(SDungeoneerTileEditWidget);
 }
 
+void FDungeoneerTileEditTool::Shutdown()
+{
+	((SDungeoneerTileEditWidget*)PanelWidget.Get())->Shutdown();
+	FDungeoneerTool::Shutdown();
+}
+
 void FDungeoneerTileEditTool::Render(const FSceneView* View, FViewport* Viewport, FPrimitiveDrawInterface* PDI)
 {
 	FDungeoneerTool::Render(View, Viewport, PDI);
@@ -65,13 +71,13 @@ void FDungeoneerTileEditTool::Render(const FSceneView* View, FViewport* Viewport
 					DrawWireBox(PDI, FBox::BuildAABB(
 						WorldPosition,
 						FVector(Mode->LevelDungeon->Scale/2)),
-						FLinearColor(0.5f, 0.5f, 0.5f, 0.5f),
+						FLinearColor(0.8f, 0.8f, 0.8f, 0.8f),
 						SDPG_World,
-						hovered? 4 : 1);
+						hovered? 4 : 2);
 					
 					drawTile = true;
 				}
-				DrawWireBox(PDI, box, FLinearColor::Yellow, SDPG_World, hovered? 4 : 1);
+				//DrawWireBox(PDI, box, FLinearColor::Yellow, SDPG_World, hovered? 4 : 1);
 			}
 		}
 	}
@@ -101,6 +107,8 @@ bool FDungeoneerTileEditTool::HandleClick(FEditorViewportClient* InViewportClien
 				TilePoint.Y,
 				TilePoint.Z,
 				(int)Direction);
+			// later we'll add multi-selection to edit values in a batch of tiles, for now we disable this.
+			/*
 			if (SelectedSegments.Contains(Selection) && Click.IsShiftDown())
 			{
 				SelectedSegments.Remove(Selection);
@@ -112,7 +120,9 @@ bool FDungeoneerTileEditTool::HandleClick(FEditorViewportClient* InViewportClien
 			
 			if (!SelectedSegments.Contains(Selection))
 				SelectedSegments.Emplace(Selection);
-			
+			*/
+			SelectedSegments.Empty();
+			SelectedSegments.Emplace(Selection);
 			((SDungeoneerTileEditWidget*)PanelWidget.Get())->OnUpdateSelection(SelectedSegments);
 			return true;
 		}

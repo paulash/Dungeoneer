@@ -12,12 +12,13 @@ public:
 
 	void Construct(const FArguments& InArgs);
 	void OnUpdateSelection(TArray<FVector4> SelectedTiles);
+	void Shutdown();
 	
 private:
 
 	void OnFinishDetails(const FPropertyChangedEvent& evt);
 	
-	TSharedPtr<STextBlock> TestText;
+	TSharedPtr<SVerticalBox> TileDetails;
 	
 	TSharedPtr<IStructureDetailsView> SelectionDetails;
 

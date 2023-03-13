@@ -64,9 +64,6 @@ void FDungeoneerEditorEdMode::Enter()
 		Toolkit = MakeShareable(new FDungeoneerEditorEdModeToolkit);
 		Toolkit->Init(Owner->GetToolkitHost());
 	}
-
-	// TODO: later need to figure out a good way to refresh all the dungeon data because templates will be invalid.
-	Tools.Empty();
 	
 	auto Tool_Select = MakeUnique<FDungeoneerTileEditTool>(this);
 	Tools.Emplace(MoveTemp(Tool_Select));
@@ -86,6 +83,9 @@ void FDungeoneerEditorEdMode::Exit()
 		FToolkitManager::Get().CloseToolkit(Toolkit.ToSharedRef());
 		Toolkit.Reset();
 	}
+
+	// clean up the tools on exit.
+	Tools.Empty();
 
 	// Call base Exit method to ensure proper cleanup
 	FEdMode::Exit();

@@ -6,16 +6,36 @@
 
 void SDungeoneerTileEditWidget::Construct(const FArguments& InArgs)
 {
+	FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+	FDetailsViewArgs ViewArgs;
+	ViewArgs.bCustomNameAreaLocation = false;
+	ViewArgs.NameAreaSettings = FDetailsViewArgs::ENameAreaSettings::HideNameArea;
+	ViewArgs.bUpdatesFromSelection = true;
+	
+	FStructOnScope* ScopeDungeonPalette = new FStructOnScope(FDungeonTile::StaticStruct(), NULL);//(uint8*)&LevelDungeon->DungeonPalette);
+	SelectionDetails = PropertyEditorModule.CreateStructureDetailView(
+		FDetailsViewArgs(),
+		FStructureDetailsViewArgs(),
+		MakeShareable(ScopeDungeonPalette),
+		FText::FromString("Dungeon Model")
+	);
+	SelectionDetails->GetOnFinishedChangingPropertiesDelegate().AddRaw(this, &SDungeoneerTileEditWidget::OnFinishDetails);
+	
 	NorthCombo = SNew(SDungeoneerTemplateCombo);
 	EastCombo = SNew(SDungeoneerTemplateCombo);
 	SouthCombo = SNew(SDungeoneerTemplateCombo);
 	WestCombo = SNew(SDungeoneerTemplateCombo);
 	UpCombo = SNew(SDungeoneerTemplateCombo);
 	DownCombo = SNew(SDungeoneerTemplateCombo);
-	
-	ChildSlot
-	[
-		SNew(SVerticalBox)
+
+	TileDetails = SNew(SVerticalBox)
+			+ SVerticalBox::Slot()
+			.VAlign(VAlign_Top)
+			.AutoHeight()
+			[
+				SelectionDetails->GetWidget().ToSharedRef()
+			]
 			+ SVerticalBox::Slot()
 			.VAlign(VAlign_Top)
 			.AutoHeight()
@@ -124,12 +144,18 @@ void SDungeoneerTileEditWidget::Construct(const FArguments& InArgs)
 					[
 						DownCombo.ToSharedRef()
 					]
-			]
+			];
+	ChildSlot
+	[
+		TileDetails.ToSharedRef()
 	];
+
+	TileDetails->SetVisibility(EVisibility::Collapsed);
 }
 
 void SDungeoneerTileEditWidget::OnUpdateSelection(TArray<FVector4> SelectedTiles)
 {
+	TileDetails->SetVisibility(EVisibility::Collapsed);
 	if (SelectedTiles.Num() == 1)
 	{
 		FIntVector TilePoint = FIntVector(SelectedTiles[0].X, SelectedTiles[0].Y, SelectedTiles[0].Z);
@@ -145,10 +171,27 @@ void SDungeoneerTileEditWidget::OnUpdateSelection(TArray<FVector4> SelectedTiles
 			UpCombo->SetSelection(Tile.SegmentModels[4]);
 			DownCombo->SetSelection(Tile.SegmentModels[5]);
 		}
+
+		FStructOnScope* ScopeTileTags = new FStructOnScope(FDungeonTile::StaticStruct(),
+			(uint8*)&FDungeoneerEditorEdMode::GetEdMode()->LevelDungeon->Tiles[TilePoint]);
+		SelectionDetails->SetStructureData(MakeShareable(ScopeTileTags));
+		SelectionDetails->SetCustomName(FText::FromString(
+			FString::FromInt(TilePoint.X) + ", " +
+			FString::FromInt(TilePoint.Y) + ", " +
+ 			FString::FromInt(TilePoint.Z)));
+
+		TileDetails->SetVisibility(EVisibility::Visible);
 	}
+}
+
+void SDungeoneerTileEditWidget::Shutdown()
+{
+	//SelectionDetails->SetStructureData(NULL);
+	SelectionDetails = NULL;
 }
 
 void SDungeoneerTileEditWidget::OnFinishDetails(const FPropertyChangedEvent& evt)
 {
+	FDungeoneerEditorEdMode::GetEdMode()->LevelDungeon->Modify();
 	FDungeoneerEditorEdMode::GetEdMode()->LevelDungeon->RegenerateTiles();
 }
