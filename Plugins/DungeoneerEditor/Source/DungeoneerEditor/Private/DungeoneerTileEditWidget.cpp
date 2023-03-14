@@ -21,13 +21,6 @@ void SDungeoneerTileEditWidget::Construct(const FArguments& InArgs)
 		FText::FromString("Dungeon Model")
 	);
 	SelectionDetails->GetOnFinishedChangingPropertiesDelegate().AddRaw(this, &SDungeoneerTileEditWidget::OnFinishDetails);
-	
-	NorthCombo = SNew(SDungeoneerTemplateCombo);
-	EastCombo = SNew(SDungeoneerTemplateCombo);
-	SouthCombo = SNew(SDungeoneerTemplateCombo);
-	WestCombo = SNew(SDungeoneerTemplateCombo);
-	UpCombo = SNew(SDungeoneerTemplateCombo);
-	DownCombo = SNew(SDungeoneerTemplateCombo);
 
 	TileDetails = SNew(SVerticalBox)
 			+ SVerticalBox::Slot()
@@ -36,6 +29,7 @@ void SDungeoneerTileEditWidget::Construct(const FArguments& InArgs)
 			[
 				SelectionDetails->GetWidget().ToSharedRef()
 			]
+			/*
 			+ SVerticalBox::Slot()
 			.VAlign(VAlign_Top)
 			.AutoHeight()
@@ -144,7 +138,7 @@ void SDungeoneerTileEditWidget::Construct(const FArguments& InArgs)
 					[
 						DownCombo.ToSharedRef()
 					]
-			];
+			]*/;
 	ChildSlot
 	[
 		TileDetails.ToSharedRef()
@@ -159,8 +153,9 @@ void SDungeoneerTileEditWidget::OnUpdateSelection(TArray<FVector4> SelectedTiles
 	if (SelectedTiles.Num() == 1)
 	{
 		FIntVector TilePoint = FIntVector(SelectedTiles[0].X, SelectedTiles[0].Y, SelectedTiles[0].Z);
+		/*
 		EDungeonSegment Segment = (EDungeonSegment)SelectedTiles[0].W;
-
+		
 		FDungeonTile Tile;
 		if (FDungeoneerEditorEdMode::GetEdMode()->LevelDungeon->GetTile(TilePoint, Tile))
 		{
@@ -171,6 +166,7 @@ void SDungeoneerTileEditWidget::OnUpdateSelection(TArray<FVector4> SelectedTiles
 			UpCombo->SetSelection(Tile.SegmentModels[4]);
 			DownCombo->SetSelection(Tile.SegmentModels[5]);
 		}
+		*/
 
 		FStructOnScope* ScopeTileTags = new FStructOnScope(FDungeonTile::StaticStruct(),
 			(uint8*)&FDungeoneerEditorEdMode::GetEdMode()->LevelDungeon->Tiles[TilePoint]);
@@ -186,7 +182,6 @@ void SDungeoneerTileEditWidget::OnUpdateSelection(TArray<FVector4> SelectedTiles
 
 void SDungeoneerTileEditWidget::Shutdown()
 {
-	//SelectionDetails->SetStructureData(NULL);
 	SelectionDetails = NULL;
 }
 
