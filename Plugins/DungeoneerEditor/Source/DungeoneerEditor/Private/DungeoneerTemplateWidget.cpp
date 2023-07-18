@@ -137,6 +137,7 @@ void SDungeoneerTemplateWidget::RefreshTemplateList()
 	if (TemplateNames.Num() == 0)
 		TemplateNames.Add(MakeShareable(new FString("NO TEMPLATES!")));
 
+	if (!TemplateList) return;
 	TemplateList->ReGenerateItems(TemplateList->GetCachedGeometry());
 
 	// reselect the selected template.

@@ -6,12 +6,72 @@
 #include "GameplayTagContainer.h"
 #include "Dungeon.generated.h"
 
+template <typename InElementType>
+struct TPriorityQueueNode {
+	InElementType Element;
+	float Priority;
+
+	TPriorityQueueNode()
+	{
+		Priority = 0;
+	}
+
+	TPriorityQueueNode(InElementType InElement, float InPriority)
+	{
+		Element = InElement;
+		Priority = InPriority;
+	}
+
+	bool operator<(const TPriorityQueueNode<InElementType> Other) const
+	{
+		return Priority < Other.Priority;
+	}
+};
+
+template <typename InElementType>
+class TPriorityQueue {
+public:
+	TPriorityQueue()
+	{
+		Array.Heapify();
+	}
+
+public:
+	// Always check if IsEmpty() before Pop-ing!
+	InElementType Pop()
+	{
+		TPriorityQueueNode<InElementType> Node;
+		Array.HeapPop(Node);
+		return Node.Element;
+	}
+
+	TPriorityQueueNode<InElementType> PopNode()
+	{
+		TPriorityQueueNode<InElementType> Node;
+		Array.HeapPop(Node);
+		return Node;
+	}
+
+	void Push(InElementType Element, float Priority)
+	{
+		Array.HeapPush(TPriorityQueueNode<InElementType>(Element, Priority));
+	}
+
+	bool IsEmpty() const
+	{
+		return Array.Num() == 0;
+	}
+
+private:
+	TArray<TPriorityQueueNode<InElementType>> Array;
+};
+
 UENUM(BlueprintType)
 enum class EDungeonSegment : uint8
 {
 	NORTH,
-	SOUTH,
 	EAST,
+	SOUTH,
 	WEST,
 	DOWN,
 	UP
@@ -51,6 +111,15 @@ const static TArray<FIntVector> DUNGEON_SEGMENT_OFFSETS = {
 	WEST_POINT,
 	FLOOR_POINT,
 	CEILING_POINT
+};
+
+const static TArray<FVector> DUNGEON_SEGMENT_FORWARDS = {
+	FVector(1, 0, 0),
+	FVector(0, 1, 0),
+	FVector(-1, 0, 0),
+	FVector(0, -1, 0),
+	FVector(0, 0, -1),
+	FVector(0, 0, 1)
 };
 
 USTRUCT()
@@ -102,6 +171,9 @@ public:
 	UPROPERTY()
 	TArray<float> SegmentRotation;
 
+	UPROPERTY()
+	TArray<AActor*> OccupyingActors;
+
 	UPROPERTY(EditAnywhere)
 	FGameplayTagContainer Tags;
 
@@ -109,6 +181,26 @@ public:
 	{
 		SegmentModels.SetNum(DUNGEON_SEGMENT_COUNT);
 		SegmentRotation.SetNum(DUNGEON_SEGMENT_COUNT);
+	}
+
+	int Weight = 1;
+	FIntVector Point; // read only, updated during render.
+	
+	// path finding stuff, do not use, its just used to cache pathfinding searches.
+	int PCost = 1;
+	int PDistance = -1;
+	FIntVector Parent;
+
+	void SetDistance(FIntVector Target)
+	{
+		PDistance = FMath::Abs(Target.X - Point.X) + FMath::Abs(Target.Y - Point.Y);
+	};
+
+	float F() const
+	{
+		if (PDistance != -1 && PCost != -1)
+			return PDistance + PCost;
+		return -1;
 	}
 };
 
@@ -128,6 +220,7 @@ class ADungeon;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnRefreshTile, ADungeon*, Dungeon, FIntVector, TilePoint);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTileTagsChanged, ADungeon*, Dungeon, FIntVector, TilePoint);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGenerated, ADungeon*, Dungeon);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUpdateOccupyingActors, ADungeon*, Dungeon, FIntVector, TilePoint);
 
 
 UCLASS(BlueprintType, NotBlueprintable)
@@ -145,6 +238,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnTileTagsChanged OnTileTagsChanged;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnUpdateOccupyingActors OnUpdateOccupyingActors;
 
 	ADungeon();
 
@@ -188,6 +284,67 @@ public:
 	{
 		Tile = Tiles.FindRef(TilePoint);
 		return Tiles.Contains(TilePoint);
+	}
+
+	UFUNCTION(BlueprintPure)
+	TArray<FIntVector> GetNeighbourTiles(FIntVector TilePoint)
+	{
+		TArray<FIntVector> Neighbours;
+		for (int i=0; i < 4; i++)
+			Neighbours.Emplace(DUNGEON_SEGMENT_OFFSETS[i] + TilePoint);
+		return Neighbours;
+	};
+
+	UFUNCTION(BlueprintCallable)
+	int AddOccupyingActor(FIntVector TilePoint, AActor* Actor)
+	{
+		if (!Tiles.Contains(TilePoint)) return INDEX_NONE;
+		if (Tiles[TilePoint].OccupyingActors.Contains(Actor)) return INDEX_NONE;
+		int insertIndex = Tiles[TilePoint].OccupyingActors.Emplace(Actor);
+		OnUpdateOccupyingActors.Broadcast(this, TilePoint);
+
+		return insertIndex;
+	}
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveOccupyingActor(FIntVector TilePoint, AActor* Actor)
+	{
+		if (!Tiles.Contains(TilePoint)) return;
+		if (!Tiles[TilePoint].OccupyingActors.Contains(Actor)) return;
+		Tiles[TilePoint].OccupyingActors.Remove(Actor);
+		
+		OnUpdateOccupyingActors.Broadcast(this, TilePoint);
+	}
+
+	UFUNCTION(BlueprintCallable)
+	bool FindPath(AActor* Mover, FIntVector Start, FIntVector End, TArray<FIntVector>& Path);
+
+	UFUNCTION(BlueprintPure)
+	TArray<AActor*> GetOccupyingActors(FIntVector TilePoint)
+	{
+		if (!Tiles.Contains(TilePoint)) return TArray<AActor*>();
+		return Tiles[TilePoint].OccupyingActors;
+	}
+
+	UFUNCTION(BlueprintPure)
+	bool HasOccupyingActors(FIntVector TilePoint)
+	{
+		if (!Tiles.Contains(TilePoint)) return false;
+		return Tiles[TilePoint].OccupyingActors.Num() != 0;
+	}
+
+	UFUNCTION(BlueprintPure)
+	int GetOccupyingActorsCount(FIntVector TilePoint)
+	{
+		if (!Tiles.Contains(TilePoint)) return 0;
+		return Tiles[TilePoint].OccupyingActors.Num();
+	}
+
+	UFUNCTION(BlueprintPure)
+	int GetOccupyingActorIndex(FIntVector TilePoint, AActor* actor)
+	{
+		if (!Tiles.Contains(TilePoint)) return INDEX_NONE;
+		return Tiles[TilePoint].OccupyingActors.Find(actor);
 	}
 
 	UFUNCTION(BlueprintPure)
@@ -236,6 +393,17 @@ public:
 			WorldLocation.Z / Scale
 		);	
 	};
+
+	UFUNCTION(BlueprintPure)
+	EDungeonSegment GetDungeonSegmentInDirection(FVector ForwardDirection)
+	{
+		for (int i=0; i < DUNGEON_SEGMENT_FORWARDS.Num(); i++)
+		{
+			if (ForwardDirection == DUNGEON_SEGMENT_FORWARDS[i])
+				return (EDungeonSegment)i;
+		}
+		return EDungeonSegment::NORTH;
+	}
 
 	UFUNCTION(BlueprintPure)
 	FVector TilePointToWorldLocation(FIntVector TilePoint)
